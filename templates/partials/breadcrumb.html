@@ -1,0 +1,10 @@
+<nav aria-label="مسیر" class="text-xs text-slate-500">
+  <ol class="flex flex-wrap items-center gap-1">
+    {% for label, url in crumbs %}
+      <li class="flex items-center gap-1">
+        {% if url %}<a href="{{ url }}" class="hover:text-brand-600">{{ label }}</a>{% else %}<span class="text-slate-700">{{ label }}</span>{% endif %}
+        {% if not forloop.last %}<span class="text-slate-300">/</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>

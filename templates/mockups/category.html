@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}خرید اشتراک {{ category.name }} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-page pt-4">
+  {% include "partials/breadcrumb.html" with crumbs=crumbs_category %}
+</div>
+
+<div class="container-page mt-3 flex items-start gap-6">
+  {# Filters: sidebar on desktop, bottom sheet on mobile #}
+  <div class="fixed inset-0 z-50 hidden lg:static lg:z-auto lg:block lg:w-64 lg:shrink-0" data-drawer="filters">
+    <div class="absolute inset-0 bg-slate-900/40 lg:hidden" data-drawer-close></div>
+    <aside class="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-4 lg:sticky lg:top-32 lg:max-h-none lg:rounded-xl lg:border lg:border-slate-200" aria-label="فیلترها">
+      <div class="flex items-center justify-between">
+        <p class="font-extrabold">فیلترها</p>
+        <button type="button" class="text-xs font-bold text-brand-600">حذف فیلترها</button>
+        <button type="button" class="btn-ghost p-2 lg:hidden" data-drawer-close aria-label="بستن">{% include "partials/icon.html" with name="x" %}</button>
+      </div>
+
+      <label class="mt-4 flex cursor-pointer items-center justify-between border-b border-slate-100 pb-4">
+        <span class="text-sm font-bold">فقط کالاهای موجود</span>
+        <input type="checkbox" class="peer sr-only" checked>
+        <span class="relative h-6 w-10 rounded-full bg-slate-300 transition peer-checked:bg-brand-600 after:absolute after:top-1 after:start-1 after:size-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-[-1rem]"></span>
+      </label>
+
+      <label class="mt-4 flex cursor-pointer items-center justify-between border-b border-slate-100 pb-4">
+        <span class="text-sm font-bold">فقط تحویل فوری</span>
+        <input type="checkbox" class="peer sr-only">
+        <span class="relative h-6 w-10 rounded-full bg-slate-300 transition peer-checked:bg-brand-600 after:absolute after:top-1 after:start-1 after:size-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-[-1rem]"></span>
+      </label>
+
+      <fieldset class="mt-4 border-b border-slate-100 pb-4">
+        <legend class="text-sm font-bold">مدت اشتراک</legend>
+        <div class="mt-3 space-y-2 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" class="size-4 accent-brand-600" checked> یک‌ماهه</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="size-4 accent-brand-600"> سه‌ماهه</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="size-4 accent-brand-600"> شش‌ماهه</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="size-4 accent-brand-600"> یک‌ساله</label>
+        </div>
+      </fieldset>
+
+      <fieldset class="mt-4">
+        <legend class="text-sm font-bold">محدوده قیمت (تومان)</legend>
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <input class="input text-center" inputmode="numeric" placeholder="از" value="{{ 500000|price }}">
+          <input class="input text-center" inputmode="numeric" placeholder="تا" value="{{ 5000000|price }}">
+        </div>
+      </fieldset>
+
+      <button type="button" class="btn-primary mt-5 w-full lg:hidden" data-drawer-close>مشاهده {{ products|length|fa }} کالا</button>
+    </aside>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h1 class="text-lg font-black text-slate-900">خرید اشتراک {{ category.name }}</h1>
+      <span class="text-xs text-slate-500">{{ products|length|fa }} کالا</span>
+    </div>
+
+    {# Mobile: filter + sort buttons #}
+    <div class="mt-3 flex gap-2 lg:hidden">
+      <button type="button" class="btn-ghost border border-slate-200 text-xs" data-drawer-open="filters">{% include "partials/icon.html" with name="filter" cls="size-4" %} فیلتر <span class="rounded bg-brand-600 px-1 text-white">{{ 2|fa }}</span></button>
+      <button type="button" class="btn-ghost border border-slate-200 text-xs">{% include "partials/icon.html" with name="sort" cls="size-4" %} پرفروش‌ترین</button>
+    </div>
+
+    {# Desktop sort bar #}
+    <div class="mt-3 hidden items-center gap-4 border-b border-slate-200 pb-3 text-sm lg:flex">
+      <span class="flex items-center gap-1 font-bold">{% include "partials/icon.html" with name="sort" cls="size-4" %} مرتب‌سازی:</span>
+      <a href="#" class="font-bold text-brand-600">پرفروش‌ترین</a>
+      <a href="#" class="text-slate-500 hover:text-slate-800">ارزان‌ترین</a>
+      <a href="#" class="text-slate-500 hover:text-slate-800">گران‌ترین</a>
+      <a href="#" class="text-slate-500 hover:text-slate-800">بیشترین تخفیف</a>
+      <a href="#" class="text-slate-500 hover:text-slate-800">جدیدترین</a>
+    </div>
+
+    {% if empty %}
+      <div class="flex flex-col items-center py-16 text-center">
+        <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-400">{% include "partials/icon.html" with name="search" cls="size-9" %}</span>
+        <p class="mt-4 font-bold">کالایی با این فیلترها پیدا نشد</p>
+        <p class="mt-1 text-sm text-slate-500">چند فیلتر را بردارید یا عبارت دیگری جست‌وجو کنید.</p>
+        <button type="button" class="btn-outline mt-4">حذف همه فیلترها</button>
+      </div>
+    {% else %}
+      <ul class="mt-3 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 [&>li]:border-b [&>li]:border-e [&>li]:border-slate-100">
+        {% for p in products %}
+        <li>{% include "partials/product_card.html" %}</li>
+        {% endfor %}
+        {# Loading skeleton example (shown while the next page loads) #}
+        <li class="p-3" aria-hidden="true">
+          <div class="skeleton aspect-square rounded-xl"></div>
+          <div class="skeleton mt-3 h-4 w-3/4"></div>
+          <div class="skeleton mt-2 h-4 w-1/2"></div>
+          <div class="skeleton mt-4 h-5 w-2/3 ms-auto"></div>
+        </li>
+      </ul>
+    {% endif %}
+
+    <section class="card mt-8 p-5">
+      <h2 class="section-title">درباره اشتراک‌های {{ category.name }}</h2>
+      <p class="mt-3 text-sm leading-8 text-slate-600">متن سئوی دسته که از پنل مدیریت با ویرایشگر متن غنی نوشته می‌شود.</p>
+    </section>
+  </div>
+</div>
+{% endblock %}

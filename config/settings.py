@@ -60,12 +60,16 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.site",
             ],
+            "builtins": ["apps.core.templatetags.persian"],
         },
     },
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+
+SITE_NAME = env("SITE_NAME", default="هوشینو")
 
 # Database: PostgreSQL in every real environment (row-level locking is required).
 DATABASES = {"default": env.db("DATABASE_URL")}
@@ -122,6 +126,9 @@ REST_FRAMEWORK = {
 # Encryption key for delivery data and sensitive fields (AES-256-GCM).
 # Must be a base64-encoded 32-byte key. Never stored in the database.
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
+
+# Same-origin framing is only allowed in DEBUG for the /design/ side-by-side preview.
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # Security hardening when not in debug mode.
 if not DEBUG:

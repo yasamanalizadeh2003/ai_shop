@@ -11,17 +11,20 @@ Django 5.2 (قالب‌های سمت سرور + Tailwind)، Django REST Framewor
 
 ## اجرای محلی (ویندوز، بدون Docker)
 
-پیش‌نیاز: Python 3.13، PostgreSQL 16، Redis (یا Memurai روی ویندوز).
+پیش‌نیاز: Python 3.13، Node.js 20+، PostgreSQL 16، Redis (یا Memurai روی ویندوز).
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
+npm install
+npm run build:css        # هنگام توسعه: npm run watch:css
 copy .env.example .env   # سپس مقادیر را پر کنید
 .\.venv\Scripts\python manage.py migrate
 .\.venv\Scripts\python manage.py runserver
 ```
 
 - سلامت سرویس: http://127.0.0.1:8000/health
+- طرح صفحه‌ها (فقط با DEBUG=True): http://127.0.0.1:8000/design/
 - کارگر پس‌زمینه: `.\.venv\Scripts\celery -A config worker -l info --pool=solo`
 - زمان‌بند: `.\.venv\Scripts\celery -A config beat -l info`
 

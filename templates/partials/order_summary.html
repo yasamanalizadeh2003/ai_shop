@@ -1,0 +1,13 @@
+<div class="card p-4">
+  <dl class="space-y-3 text-sm">
+    <div class="flex justify-between text-slate-500"><dt>قیمت کالاها ({{ summary.count|fa }})</dt><dd>{{ summary.total_before|price }} تومان</dd></div>
+    {% if discount_applied %}
+    <div class="flex justify-between text-success"><dt>کد تخفیف</dt><dd>{{ 100000|price }}- تومان</dd></div>
+    {% endif %}
+    <div class="flex justify-between border-t border-slate-100 pt-3 font-bold"><dt>جمع سبد خرید</dt><dd>{{ summary.total|price }} تومان</dd></div>
+    <div class="flex justify-between font-bold text-sale"><dt>سود شما از این خرید</dt><dd>{{ summary.profit|price }} تومان</dd></div>
+  </dl>
+  {% if cta %}
+  <a href="{{ cta_url }}" class="btn-primary mt-4 hidden w-full py-3 lg:flex">{{ cta }}</a>
+  {% endif %}
+</div>

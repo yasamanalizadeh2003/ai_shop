@@ -11,4 +11,11 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    from apps.core import mockups
+
+    urlpatterns += [
+        path("design/", mockups.index, name="design-index"),
+        path("design/<str:name>/", mockups.page, name="design-page"),
+        path("design/<str:name>/preview/", mockups.preview, name="design-preview"),
+    ]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

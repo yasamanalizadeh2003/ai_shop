@@ -1,0 +1,35 @@
+{% load static %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}خرید اشتراک و اکانت سرویس‌های هوش مصنوعی با تحویل فوری و گارانتی{% endblock %}">
+  {% block robots %}{% endblock %}
+  {% block canonical %}{% endblock %}
+  <meta name="theme-color" content="#2563eb">
+  <link rel="preload" href="{% static 'fonts/Vazirmatn-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}pb-16 lg:pb-0{% endblock %}">
+  {% if is_mockup %}
+  <div class="bg-amber-100 py-1 text-center text-xs text-amber-800">
+    پیش‌نمایش طرح با داده نمونه · <a class="font-bold underline" href="{% url 'design-index' %}">فهرست صفحه‌ها</a>
+  </div>
+  {% endif %}
+
+  {% block header %}{% include "partials/header.html" %}{% endblock %}
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}{% include "partials/footer.html" %}{% endblock %}
+  {% block bottom_nav %}{% include "partials/bottom_nav.html" %}{% endblock %}
+  {% include "partials/cart_drawer.html" %}
+
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

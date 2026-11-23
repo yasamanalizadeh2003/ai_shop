@@ -1,0 +1,29 @@
+{% load static %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>پیش‌نمایش موبایل و دسکتاپ</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="bg-slate-200">
+  <nav class="flex flex-wrap items-center gap-2 bg-white px-4 py-2 text-sm shadow">
+    <span class="font-bold">پیش‌نمایش:</span>
+    {% for key in pages %}
+      <a href="{% url 'design-preview' key %}" class="rounded-full px-3 py-1 {% if key == name %}bg-brand-600 text-white{% else %}bg-slate-100{% endif %}">{{ key }}</a>
+    {% endfor %}
+  </nav>
+  <div class="flex items-start gap-6 overflow-x-auto p-4" dir="ltr">
+    <figure class="shrink-0">
+      <figcaption class="mb-1 text-center text-xs text-slate-600">موبایل ۳۹۰px</figcaption>
+      <iframe src="{% url 'design-page' name %}{{ query }}" class="rounded-2xl border-8 border-slate-800 bg-white" style="width:390px;height:844px"></iframe>
+    </figure>
+    <figure class="shrink-0" style="width:{% widthratio 1366 100 62 %}px">
+      <figcaption class="mb-1 text-center text-xs text-slate-600">دسکتاپ ۱۳۶۶px (کوچک‌شده)</figcaption>
+      <div style="width:847px;height:{% widthratio 1400 100 62 %}px;overflow:hidden" class="rounded-lg border border-slate-300 bg-white">
+        <iframe src="{% url 'design-page' name %}{{ query }}" style="width:1366px;height:1400px;border:0;transform:scale(.62);transform-origin:0 0"></iframe>
+      </div>
+    </figure>
+  </div>
+</body>
+</html>

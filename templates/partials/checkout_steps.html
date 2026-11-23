@@ -1,0 +1,12 @@
+<ol class="mx-auto flex max-w-xl items-center text-xs font-bold" aria-label="مراحل خرید">
+  {% for key, label in steps %}
+    <li class="flex flex-1 items-center gap-2 last:flex-none {% if forloop.counter <= current %}text-brand-600{% else %}text-slate-400{% endif %}">
+      <span class="flex items-center gap-1.5 whitespace-nowrap">
+        <span class="grid size-6 place-items-center rounded-full {% if forloop.counter < current %}bg-brand-600 text-white{% elif forloop.counter == current %}border-2 border-brand-600{% else %}border-2 border-slate-300{% endif %}">
+          {% if forloop.counter < current %}{% include "partials/icon.html" with name="check" cls="size-3.5" sw="3" %}{% else %}{{ forloop.counter|fa }}{% endif %}
+        </span>{{ label }}
+      </span>
+      {% if not forloop.last %}<span class="h-0.5 flex-1 rounded {% if forloop.counter < current %}bg-brand-600{% else %}bg-slate-200{% endif %}"></span>{% endif %}
+    </li>
+  {% endfor %}
+</ol>

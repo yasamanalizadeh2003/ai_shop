@@ -1,0 +1,22 @@
+<div class="fixed inset-0 z-50 hidden" data-drawer="cart" role="dialog" aria-modal="true" aria-label="به سبد خرید اضافه شد">
+  <div class="absolute inset-0 bg-slate-900/40" data-drawer-close></div>
+  <div class="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-4 shadow-xl lg:inset-x-auto lg:bottom-auto lg:start-auto lg:end-6 lg:top-24 lg:w-96 lg:rounded-2xl">
+    <div class="flex items-center justify-between">
+      <p class="flex items-center gap-2 font-bold text-success">
+        {% include "partials/icon.html" with name="check" sw="2.5" %} به سبد خرید اضافه شد
+      </p>
+      <button type="button" class="btn-ghost p-2" data-drawer-close aria-label="بستن">{% include "partials/icon.html" with name="x" %}</button>
+    </div>
+    <div class="mt-4 flex items-center gap-3">
+      <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-black text-white">GPT</span>
+      <div class="min-w-0">
+        <p class="truncate text-sm font-bold" data-drawer-title>اشتراک ChatGPT Plus</p>
+        <p class="mt-1 text-xs text-slate-500" data-drawer-variant>یک‌ماهه اشتراکی</p>
+      </div>
+    </div>
+    <div class="mt-4 grid grid-cols-2 gap-2">
+      <a href="{% if is_mockup %}{% url 'design-page' 'cart' %}{% else %}#{% endif %}" class="btn-primary">مشاهده سبد خرید</a>
+      <button type="button" class="btn-outline" data-drawer-close>ادامه خرید</button>
+    </div>
+  </div>
+</div>

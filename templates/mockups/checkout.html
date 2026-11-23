@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}تکمیل خرید | {{ SITE_NAME }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}bg-slate-50 pb-36 lg:pb-0{% endblock %}
+
+{% block content %}
+<div class="container-page pt-5">
+  {% if step == "pay" %}
+    {% include "partials/checkout_steps.html" with steps=checkout_steps current=3 %}
+  {% else %}
+    {% include "partials/checkout_steps.html" with steps=checkout_steps current=2 %}
+  {% endif %}
+</div>
+
+{# Mockup-only switcher between checkout states #}
+<div class="container-page mt-4 flex flex-wrap justify-center gap-2 text-xs">
+  <a href="?step=login" class="rounded-full px-3 py-1 {% if step == 'login' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۱. شماره موبایل</a>
+  <a href="?step=otp" class="rounded-full px-3 py-1 {% if step == 'otp' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۲. کد تأیید</a>
+  <a href="?step=info" class="rounded-full px-3 py-1 {% if step == 'info' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۳. اطلاعات سفارش</a>
+  <a href="?step=pay" class="rounded-full px-3 py-1 {% if step == 'pay' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۴. پرداخت</a>
+</div>
+
+<div class="container-page mt-5 grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
+  <section>
+    {% if step == "login" %}
+      <div class="card mx-auto max-w-md p-6">
+        <h1 class="text-lg font-extrabold">ورود یا ثبت‌نام</h1>
+        <p class="mt-2 text-sm leading-7 text-slate-500">برای ادامه خرید، شماره موبایل خود را وارد کنید. اگر حساب نداشته باشید، خودکار ساخته می‌شود.</p>
+        <label class="mt-5 block text-sm font-bold" for="mobile">شماره موبایل</label>
+        <input id="mobile" class="input mt-2 text-left text-base tracking-widest" dir="ltr" inputmode="numeric" autocomplete="tel" placeholder="09xx xxx xxxx">
+        <a href="?step=otp" class="btn-primary mt-5 w-full py-3">دریافت کد تأیید</a>
+        <p class="mt-4 text-center text-xs leading-6 text-slate-400">ورود شما به معنای پذیرش <a href="#" class="text-brand-600">قوانین {{ SITE_NAME }}</a> است.</p>
+      </div>
+
+    {% elif step == "otp" %}
+      <div class="card mx-auto max-w-md p-6">
+        <a href="?step=login" class="flex items-center gap-1 text-xs font-bold text-brand-600">{% include "partials/icon.html" with name="chevron-right" cls="size-4" %} ویرایش شماره</a>
+        <h1 class="mt-3 text-lg font-extrabold">کد تأیید را وارد کنید</h1>
+        <p class="mt-2 text-sm text-slate-500">کد ۵ رقمی به شماره <span dir="ltr" class="font-bold text-slate-700">{{ "0912 345 6789"|fa }}</span> پیامک شد.</p>
+        <div class="mt-5 flex justify-center gap-2" dir="ltr" data-otp>
+          {% for i in "12345" %}
+          <input class="input size-12 text-center text-lg font-bold" inputmode="numeric" maxlength="1" aria-label="رقم {{ forloop.counter|fa }}">
+          {% endfor %}
+        </div>
+        <p class="mt-3 hidden text-center text-xs text-sale" role="alert">کد وارد شده اشتباه است. {{ 2|fa }} تلاش دیگر باقی مانده.</p>
+        <p class="mt-4 text-center text-xs text-slate-500">{{ "1:58"|fa }} مانده تا دریافت مجدد کد</p>
+        <a href="?step=info" class="btn-primary mt-5 w-full py-3">تأیید و ادامه</a>
+      </div>
+
+    {% elif step == "info" %}
+      <div class="card divide-y divide-slate-100">
+        <div class="p-4">
+          <h1 class="font-extrabold">اطلاعات سفارش</h1>
+          <p class="mt-1 text-xs text-slate-500">وارد شده با <span dir="ltr">{{ "0912 345 6789"|fa }}</span></p>
+        </div>
+
+        {% for item in cart_emails %}
+        <div class="p-4">
+          <div class="flex items-center gap-3">
+            <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br {{ item.product.tint }} text-xs font-black text-white">{{ item.product.mono }}</span>
+            <div>
+              <p class="text-sm font-bold">{{ item.product.title }}</p>
+              <p class="text-xs text-slate-500">{{ item.variant.name }}</p>
+            </div>
+          </div>
+          <label class="mt-3 block text-sm font-bold" for="acc-{{ forloop.counter }}">
+            {% if item.email_type == "gmail" %}جیمیلی که اشتراک روی آن فعال شود{% else %}ایمیل اکانتی که اشتراک روی آن فعال شود{% endif %}
+            <span class="text-sale">*</span>
+          </label>
+          <input id="acc-{{ forloop.counter }}" type="email" dir="ltr" class="input mt-2 text-left {% if forloop.last %}border-sale bg-red-50{% endif %}" value="{% if forloop.last %}ali@company.com{% else %}ali.rezaei@gmail.com{% endif %}">
+          {% if item.email_type == "gmail" %}
+            {% if forloop.last %}<p class="mt-1.5 text-xs text-sale" role="alert">فقط آدرس‌های ‎@gmail.com‎ پذیرفته می‌شوند.</p>{% endif %}
+            <p class="mt-1.5 text-xs text-slate-500">فقط حساب شخصی جیمیل؛ حساب‌های سازمانی (Google Workspace) پشتیبانی نمی‌شوند.</p>
+          {% else %}
+            <p class="mt-1.5 text-xs text-slate-500">آخرین ایمیل شما پیشنهاد شده است. رمز عبور شما را نمی‌خواهیم.</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="p-4">
+          <label class="block text-sm font-bold" for="notify">جیمیل برای اطلاع‌رسانی <span class="font-normal text-slate-400">(اختیاری)</span></label>
+          <input id="notify" type="email" dir="ltr" class="input mt-2 text-left" placeholder="example@gmail.com">
+          <p class="mt-1.5 text-xs text-slate-500">لینک سفارش و یادآوری تمدید علاوه بر پیامک به این ایمیل هم ارسال می‌شود.</p>
+        </div>
+
+        <div class="p-4">
+          <label class="block text-sm font-bold" for="discount">کد تخفیف</label>
+          <div class="mt-2 flex gap-2">
+            <input id="discount" class="input" dir="ltr" placeholder="کد را وارد کنید">
+            <button type="button" class="btn-outline shrink-0">اعمال</button>
+          </div>
+        </div>
+      </div>
+
+    {% elif step == "pay" %}
+      <div class="card p-6 text-center">
+        <span class="mx-auto grid size-16 place-items-center rounded-full bg-amber-50 text-warning">{% include "partials/icon.html" with name="clock" cls="size-8" %}</span>
+        <h1 class="mt-4 text-lg font-extrabold">سفارش شما ثبت شد</h1>
+        <p class="mt-2 text-sm text-slate-500">شماره سفارش <b class="text-slate-800">{{ "100245"|fa }}</b></p>
+        <p class="mx-auto mt-4 max-w-sm rounded-lg bg-amber-50 p-3 text-sm leading-7 text-amber-800">
+          موجودی سفارش تا <b>{{ "14:32"|fa }}</b> دقیقه دیگر برای شما رزرو شده است. لطفاً پرداخت را در این مدت انجام دهید.
+        </p>
+        <a href="#" class="btn-primary mx-auto mt-5 w-full max-w-sm py-3">{% include "partials/icon.html" with name="card" %} پرداخت {{ summary.total|price }} تومان</a>
+        <p class="mt-3 text-xs text-slate-400">به درگاه پرداخت بانکی منتقل می‌شوید.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="lg:sticky lg:top-32">
+    {% if step == "info" %}
+      {% include "partials/order_summary.html" with cta="ثبت سفارش و پرداخت" cta_url="?step=pay" %}
+    {% else %}
+      {% include "partials/order_summary.html" %}
+    {% endif %}
+    <ul class="card mt-3 space-y-2 p-4 text-xs text-slate-500">
+      {% for item in cart_items %}
+      <li class="flex justify-between gap-2"><span class="truncate">{{ item.product.title }} · {{ item.variant.name }}</span><span class="shrink-0">{{ item.variant.price|price }}</span></li>
+      {% endfor %}
+    </ul>
+  </aside>
+</div>
+
+{% if step == "info" %}
+<div class="fixed inset-x-0 bottom-16 z-30 border-t border-slate-200 bg-white px-4 py-3 lg:hidden">
+  <div class="flex items-center justify-between gap-3">
+    <a href="?step=pay" class="btn-primary flex-1 py-3">ثبت سفارش و پرداخت</a>
+    <div class="text-end">
+      <p class="text-[11px] text-slate-500">مبلغ قابل پرداخت</p>
+      <p class="font-black">{{ summary.total|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
