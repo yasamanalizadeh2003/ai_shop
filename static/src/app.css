@@ -15,16 +15,23 @@
 @theme {
   --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
+  /* Navy brand palette: 600 is the primary, 700 the hover state. */
+  --color-brand-50: #f2f5fa;
+  --color-brand-100: #e3e9f4;
+  --color-brand-200: #c6d2e8;
+  --color-brand-300: #9bb0d6;
+  --color-brand-400: #6a87bd;
+  --color-brand-500: #3f5f9e;
+  --color-brand-600: #233f7a;
+  --color-brand-700: #1b3164;
+  --color-brand-800: #15264f;
+  --color-brand-900: #0f1b3a;
+  --color-brand-950: #0a1228;
+
+  /* Soft gold accent, used sparingly for highlights on navy. */
+  --color-accent-300: #e6cf9c;
+  --color-accent-400: #d9b876;
+  --color-accent-500: #c9a45c;
 
   --color-sale: #ef4056;
   --color-success: #00a049;
