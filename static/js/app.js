@@ -101,12 +101,48 @@
     }));
   });
 
-  // ---------- OTP inputs: auto-advance ----------
+  // ---------- OTP inputs: auto-advance, paste, auto-submit ----------
+  const toLatin = (s) => s.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
   $$("[data-otp]").forEach((root) => {
     const inputs = $$("input", root);
+    const form = root.closest("form");
+    const fill = (digits, start = 0) => {
+      digits.split("").forEach((d, k) => { if (inputs[start + k]) inputs[start + k].value = d; });
+      const next = inputs.find((el) => !el.value);
+      if (next) next.focus();
+      else if (form) form.requestSubmit();
+    };
     inputs.forEach((input, i) => {
-      input.addEventListener("input", () => { if (input.value && inputs[i + 1]) inputs[i + 1].focus(); });
+      input.addEventListener("input", () => {
+        const digits = toLatin(input.value).replace(/\D/g, "");
+        input.value = "";
+        if (digits) fill(digits, i);
+      });
+      input.addEventListener("paste", (e) => {
+        e.preventDefault();
+        fill(toLatin(e.clipboardData.getData("text")).replace(/\D/g, ""), 0);
+      });
       input.addEventListener("keydown", (e) => { if (e.key === "Backspace" && !input.value && inputs[i - 1]) inputs[i - 1].focus(); });
     });
+  });
+
+  // ---------- Countdown (OTP resend) ----------
+  const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  $$("[data-countdown]").forEach((el) => {
+    let left = parseInt(el.dataset.countdown, 10) || 0;
+    const text = $("[data-countdown-text]", el);
+    const done = $("[data-countdown-done]", el.parentElement);
+    const tick = () => {
+      if (left <= 0) {
+        el.classList.add("hidden");
+        if (done) done.classList.remove("hidden");
+        return;
+      }
+      const m = Math.floor(left / 60), s = left % 60;
+      text.textContent = fa(`${m}:${String(s).padStart(2, "0")}`);
+      left -= 1;
+      setTimeout(tick, 1000);
+    };
+    tick();
   });
 })();

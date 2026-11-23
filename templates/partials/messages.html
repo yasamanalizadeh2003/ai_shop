@@ -1,0 +1,9 @@
+{% if messages %}
+<ul class="mt-4 space-y-2">
+  {% for m in messages %}
+  <li role="alert" class="flex items-start gap-2 rounded-lg p-3 text-xs leading-6 {% if m.level_tag == 'error' %}bg-red-50 text-red-700{% elif m.level_tag == 'success' %}bg-emerald-50 text-emerald-700{% else %}bg-brand-50 text-brand-800{% endif %}">
+    {% include "partials/icon.html" with name="info" cls="size-4 shrink-0 mt-1" %}<span>{{ m.message|fa }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

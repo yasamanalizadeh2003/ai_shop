@@ -13,10 +13,25 @@
     </div>
 
     <div class="ms-auto flex items-center gap-1 lg:gap-2">
+      {% if customer %}
+      <details class="relative hidden lg:block">
+        <summary class="btn-ghost cursor-pointer list-none border border-slate-200">
+          {% include "partials/icon.html" with name="user" %}
+          <span dir="ltr">{{ customer.mobile|fa }}</span>
+          {% include "partials/icon.html" with name="chevron-down" cls="size-4" %}
+        </summary>
+        <div class="absolute end-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-lg">
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+            <button type="submit" class="w-full rounded-lg px-3 py-2 text-start text-slate-600 hover:bg-slate-50 hover:text-sale">خروج از حساب</button>
+          </form>
+        </div>
+      </details>
+      {% else %}
       <a href="{% url 'storefront:checkout' %}" class="btn-ghost hidden border border-slate-200 lg:inline-flex">
         {% include "partials/icon.html" with name="user" %}
         <span>ورود | ثبت‌نام</span>
       </a>
+      {% endif %}
       <span class="hidden h-6 w-px bg-slate-200 lg:block"></span>
       <a href="{% url 'storefront:cart' %}" class="relative grid size-11 place-items-center rounded-lg text-slate-700 hover:bg-slate-100" aria-label="سبد خرید">
         {% include "partials/icon.html" with name="cart" cls="size-6" %}

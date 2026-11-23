@@ -26,6 +26,18 @@ copy .env.example .env   # سپس مقادیر را پر کنید
 - سایت: http://127.0.0.1:8000/
 - پنل ادمین: http://127.0.0.1:8000/admin/
 - سلامت سرویس: http://127.0.0.1:8000/health
+- در حالت توسعه، کد ورود پیامکی به‌جای ارسال، در لاگ سرور (ترمینال runserver) چاپ می‌شود.
+
+### ورود دومرحله‌ای پنل ادمین
+
+ورود به `/admin/` علاوه بر رمز، کد ۶ رقمی اپلیکیشن Authenticator را می‌خواهد. برای هر کارمند یک بار:
+
+```powershell
+.\.venv\Scripts\python manage.py setup_admin_2fa <username> --png qr.png
+```
+
+QR را با Google Authenticator یا Microsoft Authenticator اسکن کنید (برای جایگزینی دستگاه: `--reset`).
+
 - کارگر پس‌زمینه: `.\.venv\Scripts\celery -A config worker -l info --pool=solo`
 - زمان‌بند: `.\.venv\Scripts\celery -A config beat -l info`
 

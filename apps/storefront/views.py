@@ -1,11 +1,16 @@
+import time
+
+from django.conf import settings
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
+
+from apps.accounts.session import get_customer
+from apps.accounts.views import PENDING_MOBILE_KEY, RESEND_AT_KEY
 
 from . import sample_data as data
 
 CHECKOUT_STEPS = [("cart", "سبد خرید"), ("info", "اطلاعات و ورود"), ("pay", "پرداخت")]
-CHECKOUT_STATES = ("login", "otp", "info", "pay")
 
 
 def _context(nav_active=None, **extra):
@@ -61,9 +66,23 @@ def cart(request):
 
 
 def checkout(request):
-    step = request.GET.get("step", "login")
-    if step not in CHECKOUT_STATES:
-        step = "login"
+    customer = get_customer(request)
+    step = request.GET.get("step", "")
+    pending_mobile = request.session.get(PENDING_MOBILE_KEY)
+
+    if customer:
+        # Signed-in customers skip the login steps.
+        if step not in ("info", "pay"):
+            return redirect(f"{reverse('storefront:checkout')}?step=info")
+    else:
+        if step in ("info", "pay"):
+            return redirect(f"{reverse('storefront:checkout')}?step=login")
+        if step == "otp" and not pending_mobile:
+            step = "login"
+        if step not in ("login", "otp"):
+            step = "otp" if pending_mobile else "login"
+
+    resend_in = max(0, request.session.get(RESEND_AT_KEY, 0) - int(time.time()))
     items = data.CART_ITEMS
     return render(
         request,
@@ -71,6 +90,11 @@ def checkout(request):
         _context(
             "cart",
             step=step,
+            pending_mobile=pending_mobile,
+            entered_mobile=request.session.get("otp_entered_mobile", ""),
+            resend_in=resend_in,
+            code_length=settings.OTP_CODE_LENGTH,
+            otp_slots=range(settings.OTP_CODE_LENGTH),
             cart_items=items,
             cart_emails=[i for i in items if i["needs_email"]],
             summary=data.cart_summary(items),

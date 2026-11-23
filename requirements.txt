@@ -5,6 +5,8 @@ psycopg[binary]>=3.2
 celery>=5.5
 redis>=5.2
 django-celery-beat>=2.8
+django-otp>=1.6
+qrcode>=8.0
 gunicorn>=23.0; sys_platform != "win32"
 
 # dev / test

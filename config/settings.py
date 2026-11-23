@@ -34,8 +34,12 @@ INSTALLED_APPS = [
     # third party
     "rest_framework",
     "django_celery_beat",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
     # local
     "apps.core",
+    "apps.accounts",
+    "apps.notifications",
     "apps.storefront",
 ]
 
@@ -45,6 +49,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
+    "apps.accounts.session.CustomerMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -62,6 +68,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.site",
+                "apps.accounts.context_processors.customer",
             ],
             "builtins": ["apps.core.templatetags.persian"],
         },
@@ -71,6 +78,22 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 SITE_NAME = env("SITE_NAME", default="هوشینو")
+
+# Customer SMS login
+OTP_CODE_LENGTH = 5
+OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=120)
+OTP_RESEND_COOLDOWN = env.int("OTP_RESEND_COOLDOWN", default=120)
+OTP_MAX_ATTEMPTS = env.int("OTP_MAX_ATTEMPTS", default=5)
+OTP_MAX_PER_MOBILE_PER_HOUR = env.int("OTP_MAX_PER_MOBILE_PER_HOUR", default=5)
+OTP_MAX_PER_IP_PER_HOUR = env.int("OTP_MAX_PER_IP_PER_HOUR", default=20)
+
+SMS_BACKEND = env("SMS_BACKEND", default="apps.notifications.sms.ConsoleSmsBackend")
+
+# Two-factor authentication (TOTP) is required for the admin panel.
+ADMIN_REQUIRE_2FA = env.bool("ADMIN_REQUIRE_2FA", default=True)
+OTP_TOTP_ISSUER = SITE_NAME
+
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 
 # Database: PostgreSQL in every real environment (row-level locking is required).
 DATABASES = {"default": env.db("DATABASE_URL")}

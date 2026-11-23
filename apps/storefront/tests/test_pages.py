@@ -40,8 +40,22 @@ def test_prices_are_rendered_server_side_with_persian_digits(client):
     assert "۱٬۸۹۰٬۰۰۰" in html
 
 
-@pytest.mark.parametrize("step", ["login", "otp", "info", "pay", "bogus"])
-def test_checkout_steps_render(client, step):
+@pytest.mark.django_db
+@pytest.mark.parametrize("step", ["login", "otp", "bogus"])
+def test_checkout_guest_steps_render(client, step):
+    assert client.get(reverse("storefront:checkout"), {"step": step}).status_code == 200
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("step", ["info", "pay"])
+def test_checkout_customer_steps_render(client, step):
+    from apps.accounts.models import Customer
+    from apps.accounts.session import SESSION_KEY
+
+    customer = Customer.objects.create(signup_channel="web", mobile="09123456789")
+    session = client.session
+    session[SESSION_KEY] = customer.pk
+    session.save()
     assert client.get(reverse("storefront:checkout"), {"step": step}).status_code == 200
 
 
