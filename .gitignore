@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Django
+db.sqlite3
+/media/
+/staticfiles/
+
+# Secrets
+.env
+
+# Node / Tailwind build
+node_modules/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Source documents (content lives in docs/spec.md)
+*.docx

@@ -1,0 +1,12 @@
+Django>=5.2,<5.3
+djangorestframework>=3.16
+django-environ>=0.12
+psycopg[binary]>=3.2
+celery>=5.5
+redis>=5.2
+django-celery-beat>=2.8
+gunicorn>=23.0; sys_platform != "win32"
+
+# dev / test
+pytest>=8.3
+pytest-django>=4.10
