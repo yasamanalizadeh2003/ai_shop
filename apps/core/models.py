@@ -29,6 +29,34 @@ class ExchangeRate(models.Model):
         return cls.objects.order_by("-created_at", "-id").first()
 
 
+class SiteSettings(models.Model):
+    """Singleton for settings editable from the admin panel."""
+
+    GATEWAYS = [("mock", "درگاه آزمایشی")]
+
+    active_gateway = models.CharField("درگاه پرداخت فعال", max_length=30, choices=GATEWAYS, default="mock")
+    reservation_minutes = models.PositiveSmallIntegerField(
+        "مهلت رزرو سفارش (دقیقه)", default=15, validators=[MinValueValidator(5)]
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "تنظیمات سایت"
+        verbose_name_plural = "تنظیمات سایت"
+
+    def __str__(self):
+        return "تنظیمات سایت"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
 class AuditLog(models.Model):
     """Append-only record of sensitive staff actions (e.g. revealing delivery data)."""
 

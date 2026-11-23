@@ -47,7 +47,7 @@ def test_checkout_guest_steps_render(client, step):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("step", ["info", "pay"])
+@pytest.mark.parametrize("step", ["info"])
 def test_checkout_customer_steps_render(client, step):
     from apps.accounts.models import Customer
     from apps.accounts.session import SESSION_KEY

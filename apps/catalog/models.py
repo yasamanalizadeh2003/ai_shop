@@ -127,6 +127,10 @@ class Product(SeoFields):
         return reverse("storefront:product", args=[self.slug])
 
     @property
+    def mono(self):
+        return self.monogram or self.title[:2]
+
+    @property
     def feature_list(self):
         return [line.strip() for line in self.short_features.splitlines() if line.strip()]
 

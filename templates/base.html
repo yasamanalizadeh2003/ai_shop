@@ -8,6 +8,7 @@
   {% block robots %}{% endblock %}
   {% block canonical %}{% endblock %}
   <meta name="theme-color" content="#1b3164">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <link rel="preload" href="{% static 'fonts/Vazirmatn-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% block head %}{% endblock %}

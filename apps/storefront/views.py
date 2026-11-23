@@ -1,4 +1,5 @@
 import time
+from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -12,6 +13,8 @@ from apps.accounts.views import PENDING_MOBILE_KEY, RESEND_AT_KEY
 from apps.catalog import selectors
 from apps.catalog.models import Category
 from apps.core.templatetags.persian import price as fa_price
+from apps.orders import cart as cart_ops
+from apps.orders import discounts
 
 CHECKOUT_STEPS = [("cart", "سبد خرید"), ("info", "اطلاعات و ورود"), ("pay", "پرداخت")]
 FILTER_KEYS = ("in_stock", "instant", "duration", "min_price", "max_price")
@@ -20,7 +23,6 @@ FILTER_KEYS = ("in_stock", "instant", "duration", "min_price", "max_price")
 def _context(request, nav_active=None, **extra):
     return {
         "categories": selectors.active_categories(),
-        "cart_count": 0,  # The real cart arrives in M3.
         "nav_active": nav_active,
         **extra,
     }
@@ -129,11 +131,25 @@ def search_suggest(request):
     return JsonResponse({"results": results})
 
 
+def _discount_preview(cart, summary, customer):
+    if not cart or not cart.discount_code or not summary.lines:
+        return None, Decimal("0")
+    try:
+        _, amount = discounts.evaluate(cart.discount_code, summary.total, customer)
+        return cart.discount_code, amount
+    except discounts.DiscountError:
+        return None, Decimal("0")
+
+
 def cart(request):
+    cart_obj = cart_ops.get_cart(request)
+    summary = cart_ops.summarize(cart_obj)
+    problems = set(request.session.pop("cart_problems", []))
     return render(
         request,
         "storefront/cart.html",
-        _context(request, "cart", cart_items=[], summary=None, checkout_steps=CHECKOUT_STEPS),
+        _context(request, "cart", summary=summary, cart_items=summary.lines, problem_ids=problems,
+                 checkout_steps=CHECKOUT_STEPS),
     )
 
 
@@ -144,15 +160,21 @@ def checkout(request):
 
     if customer:
         # Signed-in customers skip the login steps.
-        if step not in ("info", "pay"):
+        if step != "info":
             return redirect(f"{reverse('storefront:checkout')}?step=info")
     else:
-        if step in ("info", "pay"):
+        if step == "info":
             return redirect(f"{reverse('storefront:checkout')}?step=login")
         if step == "otp" and not pending_mobile:
             step = "login"
         if step not in ("login", "otp"):
             step = "otp" if pending_mobile else "login"
+
+    cart_obj = cart_ops.get_cart(request)
+    summary = cart_ops.summarize(cart_obj)
+    if customer and summary.has_problems:
+        return redirect("storefront:cart")
+    code, discount_amount = _discount_preview(cart_obj, summary, customer)
 
     resend_in = max(0, request.session.get(RESEND_AT_KEY, 0) - int(time.time()))
     return render(
@@ -167,9 +189,13 @@ def checkout(request):
             resend_in=resend_in,
             code_length=settings.OTP_CODE_LENGTH,
             otp_slots=range(settings.OTP_CODE_LENGTH),
-            cart_items=[],
-            cart_emails=[],
-            summary=None,
+            cart=cart_obj,
+            summary=summary if summary.lines else None,
+            cart_items=summary.lines,
+            discount_code=code,
+            discount_amount=discount_amount,
+            payable=summary.total - discount_amount,
+            errors=request.session.pop("checkout_errors", {}),
             checkout_steps=CHECKOUT_STEPS,
         ),
     )

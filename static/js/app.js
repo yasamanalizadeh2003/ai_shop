@@ -99,7 +99,44 @@
     if (initial) select(initial);
   }
 
-  $$("[data-add-to-cart]").forEach((btn) => btn.addEventListener("click", () => openDrawer("cart")));
+  // ---------- Add to cart ----------
+  const csrf = () => $('meta[name="csrf-token"]')?.content || "";
+  const faDigits = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  const showToast = (text) => {
+    let el = $("[data-toast]");
+    if (!el) {
+      el = document.createElement("div");
+      el.dataset.toast = "";
+      el.setAttribute("role", "alert");
+      el.className = "fixed inset-x-4 bottom-24 z-[60] mx-auto max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-center text-sm text-white shadow-lg lg:bottom-8";
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.hidden = false;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => (el.hidden = true), 4000);
+  };
+
+  $$("[data-add-to-cart]").forEach((btn) => btn.addEventListener("click", async () => {
+    const selected = $('[data-variant][aria-checked="true"]');
+    if (!selected || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch("/cart/add/", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrf(), Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ variant: selected.dataset.vId, quantity: "1" }),
+      });
+      const data = await res.json();
+      if (!data.ok) return showToast(data.error || "افزودن به سبد ممکن نشد.");
+      $$("[data-cart-count]").forEach((el) => { el.textContent = faDigits(data.count); el.hidden = !data.count; });
+      openDrawer("cart");
+    } catch {
+      showToast("اتصال برقرار نشد؛ دوباره تلاش کنید.");
+    } finally {
+      btn.disabled = !selected.dataset.vStock;
+    }
+  }));
 
   // ---------- Tabs ----------
   $$("[data-tabs]").forEach((root) => {

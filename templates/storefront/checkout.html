@@ -6,14 +6,10 @@
 
 {% block content %}
 <div class="container-page pt-5">
-  {% if step == "pay" %}
-    {% include "partials/checkout_steps.html" with steps=checkout_steps current=3 %}
-  {% else %}
-    {% include "partials/checkout_steps.html" with steps=checkout_steps current=2 %}
-  {% endif %}
+  {% include "partials/checkout_steps.html" with steps=checkout_steps current=2 %}
 </div>
 
-<div class="container-page mt-5 grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
+<div class="container-page mt-5 grid items-start gap-4 {% if summary and step == 'info' %}lg:grid-cols-[1fr_20rem]{% endif %}">
   <section>
     {% if step == "login" %}
       <form method="post" action="{% url 'accounts:request_code' %}" class="card mx-auto max-w-md p-6" novalidate>
@@ -53,7 +49,7 @@
         </form>
       </div>
 
-    {% elif not cart_items %}
+    {% elif not summary %}
       <div class="card mx-auto max-w-md p-6 text-center">
         <span class="mx-auto grid size-16 place-items-center rounded-full bg-emerald-50 text-success">{% include "partials/icon.html" with name="check" cls="size-8" sw="2.5" %}</span>
         <h1 class="mt-4 text-lg font-extrabold">وارد حساب خود شدید</h1>
@@ -62,7 +58,7 @@
         <form method="post" action="{% url 'accounts:logout' %}" class="mt-3">{% csrf_token %}<button type="submit" class="text-xs font-bold text-slate-400 hover:text-sale">خروج از حساب</button></form>
       </div>
 
-    {% elif step == "info" %}
+    {% else %}
       <div class="card divide-y divide-slate-100">
         <div class="flex items-start justify-between gap-3 p-4">
           <div>
@@ -71,68 +67,68 @@
           </div>
           <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="text-xs font-bold text-slate-400 hover:text-sale">خروج</button></form>
         </div>
+        <div class="px-4 empty:hidden">{% include "partials/messages.html" %}</div>
 
-        {% for item in cart_emails %}
-        <div class="p-4">
-          <div class="flex items-center gap-3">
-            <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br {{ item.product.tint }} text-xs font-black text-white">{{ item.product.mono }}</span>
-            <div>
-              <p class="text-sm font-bold">{{ item.product.title }}</p>
-              <p class="text-xs text-slate-500">{{ item.variant.name }}</p>
+        <form id="order-form" method="post" action="{% url 'orders:place_order' %}" class="divide-y divide-slate-100" novalidate>
+          {% csrf_token %}
+          {% for line in summary.account_lines %}
+          {% with v=line.variant key=line.item.pk|stringformat:"s" %}
+          <div class="p-4">
+            <div class="flex items-center gap-3">
+              <span class="relative size-11 shrink-0 overflow-hidden rounded-lg">{% with p=line.product %}{% include "partials/product_media.html" with text_cls="text-xs" %}{% endwith %}</span>
+              <div>
+                <p class="text-sm font-bold">{{ line.product.title }}</p>
+                <p class="text-xs text-slate-500">{{ v.name }}</p>
+              </div>
             </div>
+            <label class="mt-3 block text-sm font-bold" for="acc-{{ line.item.pk }}">
+              {% if v.account_field_type == "gmail" %}جیمیلی که اشتراک روی آن فعال شود{% else %}ایمیل اکانتی که اشتراک روی آن فعال شود{% endif %}
+              <span class="text-sale">*</span>
+            </label>
+            {% for k, msg in errors.items %}{% if k == key %}<p class="mt-1 text-xs text-sale" role="alert">{{ msg }}</p>{% endif %}{% endfor %}
+            <input id="acc-{{ line.item.pk }}" name="account_{{ line.item.pk }}" type="email" dir="ltr" required autocomplete="email"
+                   class="input mt-2 text-left" value="{{ line.item.account_identifier|default:customer.last_email }}"
+                   placeholder="{% if v.account_field_type == 'gmail' %}example@gmail.com{% else %}you@example.com{% endif %}">
+            <p class="mt-1.5 text-xs text-slate-500">
+              {% if v.account_field_help %}{{ v.account_field_help }}{% elif v.account_field_type == "gmail" %}فقط حساب شخصی جیمیل؛ حساب‌های سازمانی پشتیبانی نمی‌شوند.{% else %}رمز عبور شما را نمی‌خواهیم.{% endif %}
+            </p>
           </div>
-          <label class="mt-3 block text-sm font-bold" for="acc-{{ forloop.counter }}">
-            {% if item.email_type == "gmail" %}جیمیلی که اشتراک روی آن فعال شود{% else %}ایمیل اکانتی که اشتراک روی آن فعال شود{% endif %}
-            <span class="text-sale">*</span>
-          </label>
-          <input id="acc-{{ forloop.counter }}" type="email" dir="ltr" class="input mt-2 text-left" value="ali.rezaei@gmail.com">
-          {% if item.email_type == "gmail" %}
-            <p class="mt-1.5 text-xs text-slate-500">فقط حساب شخصی جیمیل؛ حساب‌های سازمانی (Google Workspace) پشتیبانی نمی‌شوند.</p>
-          {% else %}
-            <p class="mt-1.5 text-xs text-slate-500">آخرین ایمیل شما پیشنهاد شده است. رمز عبور شما را نمی‌خواهیم.</p>
-          {% endif %}
-        </div>
-        {% endfor %}
+          {% endwith %}
+          {% endfor %}
 
-        <div class="p-4">
-          <label class="block text-sm font-bold" for="notify">جیمیل برای اطلاع‌رسانی <span class="font-normal text-slate-400">(اختیاری)</span></label>
-          <input id="notify" type="email" dir="ltr" class="input mt-2 text-left" placeholder="example@gmail.com">
-          <p class="mt-1.5 text-xs text-slate-500">لینک سفارش و یادآوری تمدید علاوه بر پیامک به این ایمیل هم ارسال می‌شود.</p>
-        </div>
+          <div class="p-4">
+            <label class="block text-sm font-bold" for="notify">جیمیل برای اطلاع‌رسانی <span class="font-normal text-slate-400">(اختیاری)</span></label>
+            {% if errors.notification_email %}<p class="mt-1 text-xs text-sale" role="alert">{{ errors.notification_email }}</p>{% endif %}
+            <input id="notify" name="notification_email" type="email" dir="ltr" class="input mt-2 text-left" value="{{ cart.notification_email|default:customer.last_email }}" placeholder="example@gmail.com">
+            <p class="mt-1.5 text-xs text-slate-500">لینک سفارش و یادآوری تمدید علاوه بر پیامک به این ایمیل هم ارسال می‌شود.</p>
+          </div>
+        </form>
 
-        <div class="p-4">
+        <form method="post" action="{% url 'orders:apply_discount' %}" class="p-4">
+          {% csrf_token %}
           <label class="block text-sm font-bold" for="discount">کد تخفیف</label>
-          <div class="mt-2 flex gap-2">
-            <input id="discount" class="input" dir="ltr" placeholder="کد را وارد کنید">
-            <button type="button" class="btn-outline shrink-0">اعمال</button>
-          </div>
-        </div>
-      </div>
-
-    {% elif step == "pay" %}
-      <div class="card p-6 text-center">
-        <span class="mx-auto grid size-16 place-items-center rounded-full bg-amber-50 text-warning">{% include "partials/icon.html" with name="clock" cls="size-8" %}</span>
-        <h1 class="mt-4 text-lg font-extrabold">سفارش شما ثبت شد</h1>
-        <p class="mt-2 text-sm text-slate-500">شماره سفارش <b class="text-slate-800">{{ "100245"|fa }}</b></p>
-        <p class="mx-auto mt-4 max-w-sm rounded-lg bg-amber-50 p-3 text-sm leading-7 text-amber-800">
-          موجودی سفارش تا <b>{{ "14:32"|fa }}</b> دقیقه دیگر برای شما رزرو شده است. لطفاً پرداخت را در این مدت انجام دهید.
-        </p>
-        <a href="#" class="btn-primary mx-auto mt-5 w-full max-w-sm py-3">{% include "partials/icon.html" with name="card" %} پرداخت {{ summary.total|price }} تومان</a>
-        <p class="mt-3 text-xs text-slate-400">به درگاه پرداخت بانکی منتقل می‌شوید.</p>
+          {% if discount_code %}
+            <div class="mt-2 flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              <span><span dir="ltr" class="font-mono font-bold">{{ discount_code }}</span> اعمال شد ({{ discount_amount|price }} تومان)</span>
+              <button type="submit" name="remove" value="1" class="text-xs font-bold text-slate-500 hover:text-sale">حذف</button>
+            </div>
+          {% else %}
+            <div class="mt-2 flex gap-2">
+              <input id="discount" name="discount_code" class="input uppercase" dir="ltr" placeholder="کد را وارد کنید" autocomplete="off">
+              <button type="submit" class="btn-outline shrink-0">اعمال</button>
+            </div>
+          {% endif %}
+        </form>
       </div>
     {% endif %}
   </section>
 
-  {% if summary %}
+  {% if summary and step == "info" %}
   <aside class="lg:sticky lg:top-32">
-    {% if step == "info" %}
-      {% include "partials/order_summary.html" with cta="ثبت سفارش و پرداخت" cta_url="?step=pay" %}
-    {% else %}
-      {% include "partials/order_summary.html" %}
-    {% endif %}
+    {% include "partials/order_summary.html" with cta="ثبت سفارش و پرداخت" cta_form="order-form" %}
     <ul class="card mt-3 space-y-2 p-4 text-xs text-slate-500">
-      {% for item in cart_items %}
-      <li class="flex justify-between gap-2"><span class="truncate">{{ item.product.title }} · {{ item.variant.name }}</span><span class="shrink-0">{{ item.variant.price|price }}</span></li>
+      {% for line in cart_items %}
+      <li class="flex justify-between gap-2"><span class="truncate">{{ line.product.title }} · {{ line.variant.name }}{% if line.quantity > 1 %} × {{ line.quantity|fa }}{% endif %}</span><span class="shrink-0">{{ line.line_total|price }}</span></li>
       {% endfor %}
     </ul>
   </aside>
@@ -142,10 +138,10 @@
 {% if step == "info" and summary %}
 <div class="fixed inset-x-0 bottom-16 z-30 border-t border-slate-200 bg-white px-4 py-3 lg:hidden">
   <div class="flex items-center justify-between gap-3">
-    <a href="?step=pay" class="btn-primary flex-1 py-3">ثبت سفارش و پرداخت</a>
+    <button type="submit" form="order-form" class="btn-primary flex-1 py-3">ثبت سفارش و پرداخت</button>
     <div class="text-end">
       <p class="text-[11px] text-slate-500">مبلغ قابل پرداخت</p>
-      <p class="font-black">{{ summary.total|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
+      <p class="font-black">{{ payable|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
     </div>
   </div>
 </div>

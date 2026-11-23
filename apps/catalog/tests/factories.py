@@ -1,6 +1,11 @@
 from decimal import Decimal
 
-from apps.catalog.models import Category, Product, Variant
+from apps.catalog.models import Category, Product, Seller, Variant
+
+
+def ensure_platform_seller():
+    # Transactional tests flush the database, including the seller created by migration.
+    return Seller.objects.get_or_create(is_platform=True, defaults={"name": "فروشگاه اصلی"})[0]
 
 
 def make_category(slug="دستیار-چت", name="دستیار چت"):
@@ -8,6 +13,7 @@ def make_category(slug="دستیار-چت", name="دستیار چت"):
 
 
 def make_product(slug="اشتراک-تست", title="اشتراک تست", category=None, **kwargs):
+    ensure_platform_seller()
     defaults = {"status": Product.Status.ACTIVE, "brand": "Test", "monogram": "T"}
     defaults.update(kwargs)
     return Product.objects.create(slug=slug, title=title, category=category or make_category(), **defaults)

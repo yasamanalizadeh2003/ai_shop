@@ -1,6 +1,17 @@
 from django.contrib import admin, messages
 
-from .models import AuditLog, ExchangeRate
+from .models import AuditLog, ExchangeRate, SiteSettings
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "active_gateway", "reservation_minutes", "updated_at")
+
+    def has_add_permission(self, request):
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(ExchangeRate)

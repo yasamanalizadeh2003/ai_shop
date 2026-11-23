@@ -39,6 +39,12 @@ copy .env.example .env   # سپس مقادیر را پر کنید
 
 QR را با Google Authenticator یا Microsoft Authenticator اسکن کنید (برای جایگزینی دستگاه: `--reset`).
 
+### پرداخت در حالت توسعه
+
+درگاه فعال از «تنظیمات سایت» در پنل انتخاب می‌شود. درگاه آزمایشی (فقط با DEBUG=True) یک صفحه محلی با دو دکمه «پرداخت موفق / ناموفق» نشان می‌دهد.
+
+انقضای رزروها (هر دقیقه) و استعلام پرداخت‌های معلق (هر ۳ دقیقه) کار کارگر پس‌زمینه است؛ برای اجرای آن‌ها worker و beat را هم اجرا کنید.
+
 - کارگر پس‌زمینه: `.\.venv\Scripts\celery -A config worker -l info --pool=solo`
 - زمان‌بند: `.\.venv\Scripts\celery -A config beat -l info`
 

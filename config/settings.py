@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.notifications",
     "apps.catalog",
+    "apps.orders",
+    "apps.payments",
     "apps.storefront",
 ]
 
@@ -71,6 +73,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.site",
                 "apps.accounts.context_processors.customer",
+                "apps.orders.context_processors.cart",
             ],
             "builtins": ["apps.core.templatetags.persian"],
         },
@@ -140,6 +143,10 @@ CELERY_RESULT_BACKEND = None
 CELERY_TIMEZONE = "UTC"
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULE = {
+    "expire-reservations": {"task": "apps.orders.tasks.expire_reservations", "schedule": 60.0},
+    "inquire-pending-payments": {"task": "apps.payments.tasks.inquire_pending_payments", "schedule": 180.0},
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

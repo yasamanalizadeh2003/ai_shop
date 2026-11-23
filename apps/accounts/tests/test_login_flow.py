@@ -22,9 +22,8 @@ def test_checkout_shows_login_for_guests(client):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("step", ["info", "pay"])
-def test_guests_cannot_reach_info_or_pay(client, step):
-    response = client.get(CHECKOUT, {"step": step})
+def test_guests_cannot_reach_info(client):
+    response = client.get(CHECKOUT, {"step": "info"})
     assert response.status_code == 302
     assert response.url.endswith("?step=login")
 

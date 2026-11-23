@@ -1,0 +1,24 @@
+{% load static %}<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>درگاه پرداخت آزمایشی</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="grid min-h-screen place-items-center bg-slate-100 p-4">
+  <main class="card w-full max-w-sm p-6 text-center">
+    <p class="badge mx-auto bg-amber-100 text-amber-800">فقط برای توسعه — پولی جابه‌جا نمی‌شود</p>
+    <h1 class="mt-4 text-lg font-extrabold">درگاه پرداخت آزمایشی</h1>
+    <p class="mt-2 text-sm text-slate-500">مبلغ قابل پرداخت</p>
+    <p class="mt-1 text-2xl font-black">{{ tx.amount|price }} <span class="text-sm font-normal">تومان</span></p>
+    <p class="mt-2 font-mono text-xs text-slate-400" dir="ltr">{{ tx.authority }}</p>
+    <form method="post" class="mt-6 grid gap-2">
+      {% csrf_token %}
+      <button type="submit" name="result" value="success" class="btn-primary py-3">پرداخت موفق</button>
+      <button type="submit" name="result" value="fail" class="btn-ghost border border-slate-200 py-3">انصراف / پرداخت ناموفق</button>
+    </form>
+  </main>
+</body>
+</html>

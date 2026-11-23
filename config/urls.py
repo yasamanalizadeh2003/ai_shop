@@ -17,6 +17,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("health", core_views.health, name="health"),
     path("accounts/", include("apps.accounts.urls")),
+    path("payments/", include("apps.payments.urls")),
+    path("", include("apps.orders.urls")),
     path("", include("apps.storefront.urls")),
 ]
 

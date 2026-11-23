@@ -11,7 +11,8 @@
 
 {% if not cart_items %}
 <div class="container-page mt-8">
-  <div class="card flex flex-col items-center px-4 py-14 text-center">
+  {% include "partials/messages.html" %}
+  <div class="card mt-4 flex flex-col items-center px-4 py-14 text-center">
     <span class="grid size-24 place-items-center rounded-full bg-brand-50 text-brand-400">{% include "partials/icon.html" with name="cart" cls="size-11" %}</span>
     <p class="mt-5 text-lg font-bold">سبد خرید شما خالی است!</p>
     <p class="mt-1 text-sm text-slate-500">می‌توانید از پیشنهادهای ویژه و پرفروش‌ها شروع کنید.</p>
@@ -21,27 +22,43 @@
 {% else %}
 <div class="container-page mt-6 grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
   <section class="card divide-y divide-slate-100" aria-labelledby="cart-title">
-    <div class="flex items-center justify-between p-4">
+    <div class="p-4">
       <h1 id="cart-title" class="font-extrabold">سبد خرید <span class="text-sm font-normal text-slate-500">({{ summary.count|fa }} کالا)</span></h1>
-      <button type="button" class="text-xs font-bold text-slate-400 hover:text-sale">حذف همه</button>
+      {% include "partials/messages.html" %}
     </div>
 
-    {% for item in cart_items %}
-    {% with p=item.product v=item.variant %}
-    <article class="flex gap-4 p-4">
-      <a href="{% url 'storefront:product' p.slug %}" class="grid size-20 shrink-0 place-items-center rounded-xl bg-gradient-to-br {{ p.tint }} text-lg font-black text-white lg:size-24">{{ p.mono }}</a>
+    {% for line in cart_items %}
+    {% with p=line.product v=line.variant %}
+    <article class="flex gap-4 p-4 {% if not line.is_buyable %}bg-red-50/60{% endif %}">
+      <a href="{% url 'storefront:product' p.slug %}" class="relative size-20 shrink-0 overflow-hidden rounded-xl lg:size-24">
+        {% with p=p %}{% include "partials/product_media.html" with text_cls="text-lg" %}{% endwith %}
+      </a>
       <div class="min-w-0 flex-1">
         <h2 class="text-sm font-bold leading-6"><a href="{% url 'storefront:product' p.slug %}" class="hover:text-brand-600">{{ p.title }}</a></h2>
         <ul class="mt-2 space-y-1 text-xs text-slate-500">
           <li class="flex items-center gap-1.5">{% include "partials/icon.html" with name="tag" cls="size-3.5" %}{{ v.name }}</li>
           <li class="flex items-center gap-1.5">{% include "partials/icon.html" with name="clock" cls="size-3.5" %}{{ v.delivery_label }}</li>
-          {% if item.needs_email %}<li class="flex items-center gap-1.5 text-brand-600">{% include "partials/icon.html" with name="mail" cls="size-3.5" %}نیاز به {% if item.email_type == 'gmail' %}جیمیل{% else %}ایمیل{% endif %} شما در مرحله بعد</li>{% endif %}
+          {% if line.needs_account %}<li class="flex items-center gap-1.5 text-brand-600">{% include "partials/icon.html" with name="mail" cls="size-3.5" %}نیاز به {% if v.account_field_type == 'gmail' %}جیمیل{% else %}ایمیل{% endif %} شما در مرحله بعد</li>{% endif %}
         </ul>
+        {% if line.problem %}
+        <p class="mt-2 flex items-center gap-1.5 text-xs font-bold text-red-700" role="alert">{% include "partials/icon.html" with name="alert" cls="size-4" %}{{ line.problem }}{% if line.available and line.available < line.quantity %} (موجودی: {{ line.available|fa }}){% endif %}</p>
+        {% endif %}
         <div class="mt-3 flex items-end justify-between gap-2">
-          <button type="button" class="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-500 hover:border-sale hover:text-sale">{% include "partials/icon.html" with name="trash" cls="size-4" %} حذف</button>
+          <div class="flex items-center gap-2">
+            {% if line.max_quantity > 1 %}
+            <div class="flex items-center rounded-lg border border-slate-200 text-sm">
+              <form method="post" action="{% url 'orders:cart_update' line.item.pk %}">{% csrf_token %}<input type="hidden" name="quantity" value="{{ line.quantity|add:1 }}"><button type="submit" class="grid size-8 place-items-center text-brand-600 disabled:opacity-30" aria-label="افزایش" {% if line.quantity >= line.max_quantity %}disabled{% endif %}>+</button></form>
+              <span class="w-6 text-center font-bold">{{ line.quantity|fa }}</span>
+              <form method="post" action="{% url 'orders:cart_update' line.item.pk %}">{% csrf_token %}<input type="hidden" name="quantity" value="{{ line.quantity|add:-1 }}"><button type="submit" class="grid size-8 place-items-center text-brand-600" aria-label="کاهش">−</button></form>
+            </div>
+            {% endif %}
+            <form method="post" action="{% url 'orders:cart_remove' line.item.pk %}">{% csrf_token %}
+              <button type="submit" class="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-500 hover:border-sale hover:text-sale">{% include "partials/icon.html" with name="trash" cls="size-4" %} حذف</button>
+            </form>
+          </div>
           <div class="text-end">
-            {% if v.compare_at %}<p class="text-xs text-slate-400 line-through">{{ v.compare_at|price }}</p>{% endif %}
-            <p class="font-extrabold">{{ v.price|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
+            {% if line.line_before != line.line_total %}<p class="text-xs text-slate-400 line-through">{{ line.line_before|price }}</p>{% endif %}
+            <p class="font-extrabold">{{ line.line_total|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
           </div>
         </div>
       </div>
@@ -52,15 +69,18 @@
 
   <aside class="lg:sticky lg:top-32">
     {% url 'storefront:checkout' as checkout_url %}
-    {% include "partials/order_summary.html" with cta="ادامه خرید" cta_url=checkout_url %}
-    <p class="mt-3 flex items-start gap-2 px-1 text-xs leading-6 text-slate-500">{% include "partials/icon.html" with name="info" cls="size-4 shrink-0 mt-1" %}کالاهای سبد خرید رزرو نشده‌اند؛ رزرو بعد از ثبت سفارش و برای ۱۵ دقیقه انجام می‌شود.</p>
+    {% include "partials/order_summary.html" with cta="ادامه خرید" cta_url=checkout_url disabled=summary.has_problems %}
+    {% if summary.has_problems %}
+    <p class="mt-3 px-1 text-xs leading-6 text-red-700">برای ادامه، کالاهای مشخص‌شده را حذف یا تعدادشان را کم کنید.</p>
+    {% else %}
+    <p class="mt-3 flex items-start gap-2 px-1 text-xs leading-6 text-slate-500">{% include "partials/icon.html" with name="info" cls="size-4 shrink-0 mt-1" %}کالاهای سبد خرید رزرو نشده‌اند؛ رزرو بعد از ثبت سفارش و برای چند دقیقه انجام می‌شود.</p>
+    {% endif %}
   </aside>
 </div>
 
-{# Mobile sticky checkout bar (above the bottom nav) #}
 <div class="fixed inset-x-0 bottom-16 z-30 border-t border-slate-200 bg-white px-4 py-3 lg:hidden">
   <div class="flex items-center justify-between gap-3">
-    <a href="{% url 'storefront:checkout' %}" class="btn-primary flex-1 py-3">ادامه خرید</a>
+    <a href="{% url 'storefront:checkout' %}" class="btn-primary flex-1 py-3 {% if summary.has_problems %}pointer-events-none opacity-50{% endif %}">ادامه خرید</a>
     <div class="text-end">
       <p class="text-[11px] text-slate-500">جمع سبد خرید</p>
       <p class="font-black">{{ summary.total|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
