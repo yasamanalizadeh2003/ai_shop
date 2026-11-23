@@ -13,12 +13,6 @@
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}pb-16 lg:pb-0{% endblock %}">
-  {% if is_mockup %}
-  <div class="bg-amber-100 py-1 text-center text-xs text-amber-800">
-    پیش‌نمایش طرح با داده نمونه · <a class="font-bold underline" href="{% url 'design-index' %}">فهرست صفحه‌ها</a>
-  </div>
-  {% endif %}
-
   {% block header %}{% include "partials/header.html" %}{% endblock %}
 
   <main id="main">

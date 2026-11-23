@@ -7,7 +7,7 @@
 <section class="container-page pt-4" aria-label="پیشنهادهای ویژه">
   <div class="relative">
     <div class="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto" data-slider>
-      <a href="#" class="relative flex aspect-[2/1] w-full shrink-0 snap-center items-center overflow-hidden rounded-2xl bg-gradient-to-l from-brand-700 via-brand-600 to-sky-500 p-6 text-white lg:aspect-[4/1] lg:p-12">
+      <a href="{% url 'storefront:product' 'اشتراک-chatgpt-plus' %}" class="relative flex aspect-[2/1] w-full shrink-0 snap-center items-center overflow-hidden rounded-2xl bg-gradient-to-l from-brand-700 sm:aspect-[3/1] via-brand-600 to-sky-500 p-6 text-white lg:aspect-[4/1] lg:p-12">
         <div class="max-w-md">
           <p class="text-xs font-bold text-brand-100 lg:text-sm">پرفروش‌ترین اشتراک ماه</p>
           <p class="mt-2 text-xl font-black leading-tight lg:text-4xl">ChatGPT Plus<br>با تحویل فوری</p>
@@ -15,7 +15,7 @@
         </div>
         <span class="absolute -bottom-10 -end-6 text-[10rem] font-black text-white/10 lg:text-[16rem]">AI</span>
       </a>
-      <a href="#" class="relative flex aspect-[2/1] w-full shrink-0 snap-center items-center overflow-hidden rounded-2xl bg-gradient-to-l from-indigo-700 to-violet-500 p-6 text-white lg:aspect-[4/1] lg:p-12">
+      <a href="{% url 'storefront:product' 'اشتراک-جمینای' %}" class="relative flex aspect-[2/1] w-full shrink-0 snap-center items-center overflow-hidden rounded-2xl bg-gradient-to-l from-indigo-700 sm:aspect-[3/1] to-violet-500 p-6 text-white lg:aspect-[4/1] lg:p-12">
         <div class="max-w-md">
           <p class="text-xs font-bold text-indigo-100 lg:text-sm">فعال‌سازی روی جیمیل خودتان</p>
           <p class="mt-2 text-xl font-black leading-tight lg:text-4xl">Gemini Advanced<br>تا ۱۵٪ تخفیف</p>
@@ -35,7 +35,7 @@
   <ul class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6">
     {% for c in categories %}
     <li>
-      <a href="{% url 'design-page' 'category' %}" class="flex flex-col items-center gap-2 rounded-xl p-2 text-center hover:bg-slate-50">
+      <a href="{% url 'storefront:category' c.slug %}" class="flex flex-col items-center gap-2 rounded-xl p-2 text-center hover:bg-slate-50">
         <span class="grid size-16 place-items-center rounded-full bg-brand-50 text-brand-600 lg:size-20">
           {% include "partials/icon.html" with name=c.icon cls="size-7 lg:size-8" %}
         </span>
@@ -52,7 +52,7 @@
     <div class="flex w-28 shrink-0 flex-col items-center justify-center gap-2 ps-4 text-center text-white lg:w-44">
       <h2 id="deals-title" class="text-lg font-black leading-tight lg:text-2xl">پیشنهاد<br>ویژه</h2>
       <span class="text-4xl lg:text-5xl">%</span>
-      <a href="{% url 'design-page' 'category' %}" class="flex items-center text-xs font-bold text-brand-100">مشاهده همه {% include "partials/icon.html" with name="chevron-left" cls="size-4" %}</a>
+      <a href="{% url 'storefront:category' categories.0.slug %}" class="flex items-center text-xs font-bold text-brand-100">مشاهده همه {% include "partials/icon.html" with name="chevron-left" cls="size-4" %}</a>
     </div>
     <ul class="no-scrollbar flex gap-0.5 overflow-x-auto pe-4">
       {% for p in discounted %}
@@ -76,7 +76,7 @@
 <section class="container-page mt-10" aria-labelledby="best-title">
   <div class="flex items-center justify-between">
     <h2 id="best-title" class="section-title">پرفروش‌ترین‌ها</h2>
-    <a href="{% url 'design-page' 'category' %}" class="flex items-center text-sm font-bold text-brand-600">مشاهده همه {% include "partials/icon.html" with name="chevron-left" cls="size-4" %}</a>
+    <a href="{% url 'storefront:category' categories.0.slug %}" class="flex items-center text-sm font-bold text-brand-600">مشاهده همه {% include "partials/icon.html" with name="chevron-left" cls="size-4" %}</a>
   </div>
   <ul class="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-3 lg:grid-cols-6 [&>li]:border-b [&>li]:border-e [&>li]:border-slate-100">
     {% for p in best_sellers %}

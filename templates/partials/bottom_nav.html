@@ -1,13 +1,13 @@
 <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="منوی پایین">
   <ul class="grid grid-cols-4 text-[11px] text-slate-500">
     {% with active=nav_active|default:"home" %}
-    <li><a href="{% if is_mockup %}{% url 'design-page' 'home' %}{% else %}/{% endif %}" class="flex flex-col items-center gap-1 py-2 {% if active == 'home' %}font-bold text-brand-600{% endif %}">{% include "partials/icon.html" with name="home" cls="size-6" %}خانه</a></li>
-    <li><a href="{% if is_mockup %}{% url 'design-page' 'category' %}{% else %}#{% endif %}" class="flex flex-col items-center gap-1 py-2 {% if active == 'categories' %}font-bold text-brand-600{% endif %}">{% include "partials/icon.html" with name="grid" cls="size-6" %}دسته‌بندی</a></li>
-    <li><a href="{% if is_mockup %}{% url 'design-page' 'cart' %}{% else %}#{% endif %}" class="relative flex flex-col items-center gap-1 py-2 {% if active == 'cart' %}font-bold text-brand-600{% endif %}">
+    <li><a href="{% url 'storefront:home' %}" class="flex flex-col items-center gap-1 py-2 {% if active == 'home' %}font-bold text-brand-600{% endif %}">{% include "partials/icon.html" with name="home" cls="size-6" %}خانه</a></li>
+    <li><a href="{% url 'storefront:category' categories.0.slug %}" class="flex flex-col items-center gap-1 py-2 {% if active == 'categories' %}font-bold text-brand-600{% endif %}">{% include "partials/icon.html" with name="grid" cls="size-6" %}دسته‌بندی</a></li>
+    <li><a href="{% url 'storefront:cart' %}" class="relative flex flex-col items-center gap-1 py-2 {% if active == 'cart' %}font-bold text-brand-600{% endif %}">
       <span class="relative">{% include "partials/icon.html" with name="cart" cls="size-6" %}
         {% if cart_count %}<span class="absolute -top-1.5 -start-2 grid min-w-4 place-items-center rounded bg-sale px-0.5 text-[10px] font-bold leading-4 text-white">{{ cart_count|fa }}</span>{% endif %}
       </span>سبد خرید</a></li>
-    <li><a href="{% if is_mockup %}{% url 'design-page' 'checkout' %}{% else %}#{% endif %}" class="flex flex-col items-center gap-1 py-2 {% if active == 'account' %}font-bold text-brand-600{% endif %}">{% include "partials/icon.html" with name="user" cls="size-6" %}حساب من</a></li>
+    <li><a href="{% url 'storefront:checkout' %}" class="flex flex-col items-center gap-1 py-2 {% if active == 'account' %}font-bold text-brand-600{% endif %}">{% include "partials/icon.html" with name="user" cls="size-6" %}حساب من</a></li>
     {% endwith %}
   </ul>
 </nav>

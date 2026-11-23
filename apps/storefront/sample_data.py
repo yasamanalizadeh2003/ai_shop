@@ -1,11 +1,7 @@
 """
-Static design mockups with sample data, served only in DEBUG under /design/.
-They are used to review and approve the main page layouts before the real
-catalog, cart and checkout are implemented.
+Temporary sample catalog used by the storefront pages until the real
+catalog, cart and checkout (M2/M3) replace it.
 """
-
-from django.http import Http404
-from django.shortcuts import render
 
 CATEGORIES = [
     {"slug": "دستیار-چت", "name": "دستیار چت", "icon": "chat", "count": 12},
@@ -199,60 +195,31 @@ CART_ITEMS = [
 ]
 
 
-def _cart_summary(items):
+def get_category(slug):
+    return next((c for c in CATEGORIES if c["slug"] == slug), None)
+
+
+def get_product(slug):
+    if slug == PRODUCT_DETAIL["slug"]:
+        return PRODUCT_DETAIL
+    base = next((p for p in PRODUCTS if p["slug"] == slug), None)
+    if base is None:
+        return None
+    variant = {
+        "id": 1,
+        "name": "یک‌ماهه اشتراکی",
+        "price": base["price"],
+        "compare_at": base["compare_at"],
+        "delivery": "stock" if base["instant"] else "manual",
+        "delivery_label": "تحویل فوری" if base["instant"] else "فعال‌سازی حداکثر ۶ ساعت",
+        "account_type": "shared",
+        "warranty": "گارانتی ۳۰ روزه",
+        "in_stock": base["in_stock"],
+    }
+    return {**PRODUCT_DETAIL, **base, "variants": [variant]}
+
+
+def cart_summary(items):
     total_before = sum((i["variant"].get("compare_at") or i["variant"]["price"]) for i in items)
     total = sum(i["variant"]["price"] for i in items)
     return {"count": len(items), "total_before": total_before, "total": total, "profit": total_before - total}
-
-
-def _base_context(**extra):
-    return {"categories": CATEGORIES, "cart_count": len(CART_ITEMS), "is_mockup": True, **extra}
-
-
-PAGES = {
-    "home": "mockups/home.html",
-    "category": "mockups/category.html",
-    "product": "mockups/product.html",
-    "cart": "mockups/cart.html",
-    "checkout": "mockups/checkout.html",
-}
-
-
-def index(request):
-    return render(request, "mockups/index.html", _base_context(pages=PAGES))
-
-
-def preview(request, name):
-    if name not in PAGES:
-        raise Http404
-    query = request.GET.urlencode()
-    return render(request, "mockups/preview.html", {"name": name, "query": f"?{query}" if query else "", "pages": PAGES})
-
-
-def page(request, name):
-    template = PAGES.get(name)
-    if template is None:
-        raise Http404
-
-    context = _base_context(
-        products=PRODUCTS,
-        best_sellers=PRODUCTS[:6],
-        discounted=[p for p in PRODUCTS if p["compare_at"]],
-        product=PRODUCT_DETAIL,
-        related=PRODUCTS[1:6],
-        cart_items=CART_ITEMS,
-        summary=_cart_summary(CART_ITEMS),
-        category=CATEGORIES[0],
-        crumbs_category=[("خانه", "/design/home/"), (CATEGORIES[0]["name"], None)],
-        crumbs_product=[
-            ("خانه", "/design/home/"),
-            (CATEGORIES[0]["name"], "/design/category/"),
-            (PRODUCT_DETAIL["title"], None),
-        ],
-        nav_active={"home": "home", "category": "categories", "cart": "cart", "checkout": "cart"}.get(name),
-        checkout_steps=[("cart", "سبد خرید"), ("info", "اطلاعات و ورود"), ("pay", "پرداخت")],
-        step=request.GET.get("step", "login"),
-        cart_emails=[i for i in CART_ITEMS if i["needs_email"]],
-        empty=request.GET.get("empty") == "1",
-    )
-    return render(request, template, context)

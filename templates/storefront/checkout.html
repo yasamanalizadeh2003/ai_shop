@@ -13,14 +13,6 @@
   {% endif %}
 </div>
 
-{# Mockup-only switcher between checkout states #}
-<div class="container-page mt-4 flex flex-wrap justify-center gap-2 text-xs">
-  <a href="?step=login" class="rounded-full px-3 py-1 {% if step == 'login' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۱. شماره موبایل</a>
-  <a href="?step=otp" class="rounded-full px-3 py-1 {% if step == 'otp' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۲. کد تأیید</a>
-  <a href="?step=info" class="rounded-full px-3 py-1 {% if step == 'info' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۳. اطلاعات سفارش</a>
-  <a href="?step=pay" class="rounded-full px-3 py-1 {% if step == 'pay' %}bg-slate-800 text-white{% else %}bg-white text-slate-600 ring-1 ring-slate-200{% endif %}">۴. پرداخت</a>
-</div>
-
 <div class="container-page mt-5 grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
   <section>
     {% if step == "login" %}
@@ -68,9 +60,8 @@
             {% if item.email_type == "gmail" %}جیمیلی که اشتراک روی آن فعال شود{% else %}ایمیل اکانتی که اشتراک روی آن فعال شود{% endif %}
             <span class="text-sale">*</span>
           </label>
-          <input id="acc-{{ forloop.counter }}" type="email" dir="ltr" class="input mt-2 text-left {% if forloop.last %}border-sale bg-red-50{% endif %}" value="{% if forloop.last %}ali@company.com{% else %}ali.rezaei@gmail.com{% endif %}">
+          <input id="acc-{{ forloop.counter }}" type="email" dir="ltr" class="input mt-2 text-left" value="ali.rezaei@gmail.com">
           {% if item.email_type == "gmail" %}
-            {% if forloop.last %}<p class="mt-1.5 text-xs text-sale" role="alert">فقط آدرس‌های ‎@gmail.com‎ پذیرفته می‌شوند.</p>{% endif %}
             <p class="mt-1.5 text-xs text-slate-500">فقط حساب شخصی جیمیل؛ حساب‌های سازمانی (Google Workspace) پشتیبانی نمی‌شوند.</p>
           {% else %}
             <p class="mt-1.5 text-xs text-slate-500">آخرین ایمیل شما پیشنهاد شده است. رمز عبور شما را نمی‌خواهیم.</p>

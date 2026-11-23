@@ -1,5 +1,5 @@
 {# Product card: image, name, price, struck price with percent, "instant delivery" and "out of stock" badges. #}
-<a href="{% if is_mockup %}{% url 'design-page' 'product' %}{% else %}#{% endif %}"
+<a href="{% url 'storefront:product' p.slug %}"
    class="group flex h-full flex-col bg-white p-3 transition hover:shadow-lg hover:shadow-slate-200/70 {{ extra|default:'' }}">
   <div class="relative aspect-square overflow-hidden rounded-xl bg-gradient-to-br {{ p.tint }} {% if not p.in_stock %}opacity-50 grayscale{% endif %}">
     <span class="absolute inset-0 grid place-items-center text-3xl font-black text-white/95 drop-shadow">{{ p.mono }}</span>

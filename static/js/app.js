@@ -35,13 +35,13 @@
 
   // ---------- Search suggestions (sample data; will call the backend later) ----------
   const SUGGESTIONS = [
-    { title: "اشتراک ChatGPT Plus", keys: ["chatgpt", "چت جی پی تی", "چت‌جی‌پی‌تی", "openai", "gpt"] },
-    { title: "اشتراک Gemini Advanced", keys: ["gemini", "جمینای", "جمنای", "هوش مصنوعی گوگل", "google"] },
-    { title: "اشتراک Claude Pro", keys: ["claude", "کلود", "anthropic"] },
-    { title: "اشتراک Midjourney", keys: ["midjourney", "میدجرنی", "تولید تصویر"] },
-    { title: "اشتراک Cursor Pro", keys: ["cursor", "کرسر", "برنامه نویسی"] },
-    { title: "اشتراک Perplexity Pro", keys: ["perplexity", "پرپلکسیتی"] },
-    { title: "اشتراک GitHub Copilot", keys: ["copilot", "کوپایلوت", "github"] },
+    { slug: "اشتراک-chatgpt-plus", title: "اشتراک ChatGPT Plus", keys: ["chatgpt", "چت جی پی تی", "چت‌جی‌پی‌تی", "openai", "gpt"] },
+    { slug: "اشتراک-جمینای", title: "اشتراک Gemini Advanced", keys: ["gemini", "جمینای", "جمنای", "هوش مصنوعی گوگل", "google"] },
+    { slug: "اشتراک-claude-pro", title: "اشتراک Claude Pro", keys: ["claude", "کلود", "anthropic"] },
+    { slug: "اشتراک-midjourney", title: "اشتراک Midjourney", keys: ["midjourney", "میدجرنی", "تولید تصویر"] },
+    { slug: "اشتراک-cursor-pro", title: "اشتراک Cursor Pro", keys: ["cursor", "کرسر", "برنامه نویسی"] },
+    { slug: "اشتراک-perplexity-pro", title: "اشتراک Perplexity Pro", keys: ["perplexity", "پرپلکسیتی"] },
+    { slug: "اشتراک-github-copilot", title: "اشتراک GitHub Copilot", keys: ["copilot", "کوپایلوت", "github"] },
   ];
   const norm = (s) => s.toLowerCase().replace(/\u200c/g, " ").replace(/ي/g, "ی").replace(/ك/g, "ک").trim();
 
@@ -56,7 +56,7 @@
       if (!q) return panel.classList.add("hidden");
       const hits = SUGGESTIONS.filter((s) => norm(s.title).includes(q) || s.keys.some((k) => norm(k).includes(q)));
       list.innerHTML = hits.length
-        ? hits.map((h) => `<li><a href="/design/product/" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50">🔍 ${h.title}</a></li>`).join("")
+        ? hits.map((h) => `<li><a href="/product/${encodeURIComponent(h.slug)}/" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50">🔍 ${h.title}</a></li>`).join("")
         : `<li class="px-4 py-3 text-slate-500">نتیجه‌ای پیدا نشد؛ عبارت دیگری امتحان کنید.</li>`;
       panel.classList.remove("hidden");
     };

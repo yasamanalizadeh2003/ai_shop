@@ -23,8 +23,9 @@ copy .env.example .env   # سپس مقادیر را پر کنید
 .\.venv\Scripts\python manage.py runserver
 ```
 
+- سایت: http://127.0.0.1:8000/
+- پنل ادمین: http://127.0.0.1:8000/admin/
 - سلامت سرویس: http://127.0.0.1:8000/health
-- طرح صفحه‌ها (فقط با DEBUG=True): http://127.0.0.1:8000/design/
 - کارگر پس‌زمینه: `.\.venv\Scripts\celery -A config worker -l info --pool=solo`
 - زمان‌بند: `.\.venv\Scripts\celery -A config beat -l info`
 

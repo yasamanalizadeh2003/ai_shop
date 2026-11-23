@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="mt-4 grid grid-cols-2 gap-2">
-      <a href="{% if is_mockup %}{% url 'design-page' 'cart' %}{% else %}#{% endif %}" class="btn-primary">مشاهده سبد خرید</a>
+      <a href="{% url 'storefront:cart' %}" class="btn-primary">مشاهده سبد خرید</a>
       <button type="button" class="btn-outline" data-drawer-close>ادامه خرید</button>
     </div>
   </div>

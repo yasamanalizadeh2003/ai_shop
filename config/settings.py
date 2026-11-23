@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     # local
     "apps.core",
+    "apps.storefront",
 ]
 
 MIDDLEWARE = [
@@ -126,9 +127,6 @@ REST_FRAMEWORK = {
 # Encryption key for delivery data and sensitive fields (AES-256-GCM).
 # Must be a base64-encoded 32-byte key. Never stored in the database.
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
-
-# Same-origin framing is only allowed in DEBUG for the /design/ side-by-side preview.
-X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # Security hardening when not in debug mode.
 if not DEBUG:

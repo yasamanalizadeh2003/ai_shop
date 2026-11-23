@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container-page pt-4">
-  {% include "partials/breadcrumb.html" with crumbs=crumbs_category %}
+  {% include "partials/breadcrumb.html" with crumbs=crumbs %}
 </div>
 
 <div class="container-page mt-3 flex items-start gap-6">
@@ -86,13 +86,6 @@
         {% for p in products %}
         <li>{% include "partials/product_card.html" %}</li>
         {% endfor %}
-        {# Loading skeleton example (shown while the next page loads) #}
-        <li class="p-3" aria-hidden="true">
-          <div class="skeleton aspect-square rounded-xl"></div>
-          <div class="skeleton mt-3 h-4 w-3/4"></div>
-          <div class="skeleton mt-2 h-4 w-1/2"></div>
-          <div class="skeleton mt-4 h-5 w-2/3 ms-auto"></div>
-        </li>
       </ul>
     {% endif %}
 
