@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.notifications",
+    "apps.catalog",
     "apps.storefront",
 ]
 
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     "apps.accounts.session.CustomerMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.catalog.middleware.RedirectFallbackMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -88,6 +90,7 @@ OTP_MAX_PER_MOBILE_PER_HOUR = env.int("OTP_MAX_PER_MOBILE_PER_HOUR", default=5)
 OTP_MAX_PER_IP_PER_HOUR = env.int("OTP_MAX_PER_IP_PER_HOUR", default=20)
 
 SMS_BACKEND = env("SMS_BACKEND", default="apps.notifications.sms.ConsoleSmsBackend")
+TEAM_ALERT_BACKEND = env("TEAM_ALERT_BACKEND", default="apps.notifications.team.LogTeamBackend")
 
 # Two-factor authentication (TOTP) is required for the admin panel.
 ADMIN_REQUIRE_2FA = env.bool("ADMIN_REQUIRE_2FA", default=True)

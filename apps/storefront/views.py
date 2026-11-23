@@ -1,67 +1,139 @@
 import time
+from urllib.parse import urlencode
 
 from django.conf import settings
-from django.http import Http404
-from django.shortcuts import redirect, render
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_GET
 
 from apps.accounts.session import get_customer
 from apps.accounts.views import PENDING_MOBILE_KEY, RESEND_AT_KEY
-
-from . import sample_data as data
+from apps.catalog import selectors
+from apps.catalog.models import Category
+from apps.core.templatetags.persian import price as fa_price
 
 CHECKOUT_STEPS = [("cart", "سبد خرید"), ("info", "اطلاعات و ورود"), ("pay", "پرداخت")]
+FILTER_KEYS = ("in_stock", "instant", "duration", "min_price", "max_price")
 
 
-def _context(nav_active=None, **extra):
-    return {"categories": data.CATEGORIES, "cart_count": len(data.CART_ITEMS), "nav_active": nav_active, **extra}
+def _context(request, nav_active=None, **extra):
+    return {
+        "categories": selectors.active_categories(),
+        "cart_count": 0,  # The real cart arrives in M3.
+        "nav_active": nav_active,
+        **extra,
+    }
 
 
 def home(request):
-    products = data.PRODUCTS
     return render(
         request,
         "storefront/home.html",
         _context(
+            request,
             "home",
-            best_sellers=products[:6],
-            discounted=[p for p in products if p["compare_at"]],
+            best_sellers=selectors.featured_cards(),
+            discounted=selectors.discounted_cards(),
         ),
     )
 
 
 def category(request, slug):
-    cat = data.get_category(slug)
-    if cat is None:
-        raise Http404
-    crumbs = [("خانه", reverse("storefront:home")), (cat["name"], None)]
+    cat = get_object_or_404(Category, slug=slug, is_active=True)
+    products, filters = selectors.category_cards(cat, request.GET)
+
+    filter_items = [(k, request.GET.getlist(k)) for k in FILTER_KEYS if any(request.GET.getlist(k))]
+    base = cat.get_absolute_url()
+    sort_links = []
+    for key, label in selectors.SORTS:
+        query = urlencode([*((k, v) for k, vals in filter_items for v in vals), ("sort", key)])
+        sort_links.append((key, label, f"{base}?{query}"))
+
+    active_count = sum(
+        [filters["in_stock"], filters["instant"], bool(filters["durations"]),
+         filters["min_price"] is not None or filters["max_price"] is not None]
+    )
     return render(
         request,
         "storefront/category.html",
-        _context("categories", category=cat, products=data.PRODUCTS, crumbs=crumbs),
+        _context(
+            request,
+            "categories",
+            category=cat,
+            products=products,
+            filters=filters,
+            has_filters=bool(filter_items),
+            active_filter_count=active_count,
+            filter_query_items=filter_items,
+            sort_links=sort_links,
+            sorts=selectors.SORTS,
+            duration_buckets=selectors.DURATION_BUCKETS,
+            crumbs=[("خانه", reverse("storefront:home")), (cat.name, None)],
+            seo_title=cat.seo_title or f"خرید اشتراک {cat.name} | {settings.SITE_NAME}",
+            seo_description=cat.seo_description or f"خرید اشتراک {cat.name} با تحویل فوری و گارانتی از {settings.SITE_NAME}.",
+            canonical_url=request.build_absolute_uri(base),
+        ),
     )
 
 
 def product(request, slug):
-    item = data.get_product(slug)
-    if item is None:
+    card = selectors.product_detail(slug)
+    if card is None:
         raise Http404
-    cat = item["category"]
-    crumbs = [
-        ("خانه", reverse("storefront:home")),
-        (cat["name"], reverse("storefront:category", args=[cat["slug"]])),
-        (item["title"], None),
+    selected = card.buyable[0] if card.buyable else card.variants[0]
+    cat = card.product.category
+    seo_description = card.product.seo_description or (
+        f"خرید {card.title} از {fa_price(card.price)} تومان، {selected.delivery_label} و {selected.warranty_label}."
+    )
+    return render(
+        request,
+        "storefront/product.html",
+        _context(
+            request,
+            product=card,
+            selected=selected,
+            related=selectors.related_cards(card),
+            crumbs=[
+                ("خانه", reverse("storefront:home")),
+                (cat.name, cat.get_absolute_url()),
+                (card.title, None),
+            ],
+            seo_title=card.product.seo_title or f"خرید {card.title} | {settings.SITE_NAME}",
+            seo_description=seo_description,
+            canonical_url=request.build_absolute_uri(card.product.get_absolute_url()),
+        ),
+    )
+
+
+def search(request):
+    q = request.GET.get("q", "").strip()[:100]
+    return render(
+        request,
+        "storefront/search.html",
+        _context(request, search_query=q, products=selectors.search_cards(q)),
+    )
+
+
+@require_GET
+def search_suggest(request):
+    q = request.GET.get("q", "").strip()[:100]
+    results = [
+        {
+            "title": c.title,
+            "url": c.product.get_absolute_url(),
+            "price": f"{fa_price(c.price)} تومان" if c.in_stock else "ناموجود",
+        }
+        for c in selectors.search_cards(q, limit=8)
     ]
-    related = [p for p in data.PRODUCTS if p["slug"] != slug][:5]
-    return render(request, "storefront/product.html", _context(product=item, related=related, crumbs=crumbs))
+    return JsonResponse({"results": results})
 
 
 def cart(request):
-    items = data.CART_ITEMS
     return render(
         request,
         "storefront/cart.html",
-        _context("cart", cart_items=items, summary=data.cart_summary(items), checkout_steps=CHECKOUT_STEPS),
+        _context(request, "cart", cart_items=[], summary=None, checkout_steps=CHECKOUT_STEPS),
     )
 
 
@@ -83,11 +155,11 @@ def checkout(request):
             step = "otp" if pending_mobile else "login"
 
     resend_in = max(0, request.session.get(RESEND_AT_KEY, 0) - int(time.time()))
-    items = data.CART_ITEMS
     return render(
         request,
         "storefront/checkout.html",
         _context(
+            request,
             "cart",
             step=step,
             pending_mobile=pending_mobile,
@@ -95,9 +167,9 @@ def checkout(request):
             resend_in=resend_in,
             code_length=settings.OTP_CODE_LENGTH,
             otp_slots=range(settings.OTP_CODE_LENGTH),
-            cart_items=items,
-            cart_emails=[i for i in items if i["needs_email"]],
-            summary=data.cart_summary(items),
+            cart_items=[],
+            cart_emails=[],
+            summary=None,
             checkout_steps=CHECKOUT_STEPS,
         ),
     )

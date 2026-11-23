@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}جست‌وجوی «{{ search_query }}» | {{ SITE_NAME }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+
+{% block content %}
+<div class="container-page pt-5">
+  <h1 class="text-lg font-black">{% if search_query %}نتایج جست‌وجو برای «{{ search_query }}»{% else %}جست‌وجو{% endif %}</h1>
+  <p class="mt-1 text-xs text-slate-500">{{ products|length|fa }} کالا</p>
+
+  {% if products %}
+    <ul class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 [&>li]:border-b [&>li]:border-e [&>li]:border-slate-100">
+      {% for p in products %}<li>{% include "partials/product_card.html" %}</li>{% endfor %}
+    </ul>
+  {% else %}
+    <div class="flex flex-col items-center py-16 text-center">
+      <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-400">{% include "partials/icon.html" with name="search" cls="size-9" %}</span>
+      <p class="mt-4 font-bold">{% if search_query|length < 2 %}حداقل دو حرف وارد کنید{% else %}نتیجه‌ای پیدا نشد{% endif %}</p>
+      <p class="mt-1 text-sm text-slate-500">نام فارسی یا انگلیسی سرویس را امتحان کنید؛ مثلاً «جمینای» یا Gemini.</p>
+      <a href="{% url 'storefront:home' %}" class="btn-outline mt-4">بازگشت به فروشگاه</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

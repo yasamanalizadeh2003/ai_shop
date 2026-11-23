@@ -1,51 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}خرید {{ product.title }} با تحویل فوری | {{ SITE_NAME }}{% endblock %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta_description %}{{ seo_description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ canonical_url }}">{% endblock %}
 {% block body_class %}pb-24 lg:pb-0{% endblock %}
 {% block bottom_nav %}{% endblock %}
 
 {% block content %}
-{% with v=product.variants.0 %}
+{% with p=product v=selected %}
 <div class="container-page pt-4">
   {% include "partials/breadcrumb.html" with crumbs=crumbs %}
 </div>
 
 <div class="container-page mt-4 grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)_20rem]" data-product>
   {# Gallery #}
-  <section aria-label="تصاویر محصول">
-    <div class="relative mx-auto aspect-[16/10] overflow-hidden rounded-2xl bg-gradient-to-br {{ product.tint }} lg:aspect-square">
-      <span class="absolute inset-0 grid place-items-center text-6xl font-black text-white drop-shadow lg:text-7xl">{{ product.mono }}</span>
-      <span class="absolute inset-x-0 bottom-3 flex justify-center gap-1.5 lg:hidden" aria-hidden="true"><span class="h-1.5 w-4 rounded-full bg-white"></span><span class="size-1.5 rounded-full bg-white/50"></span><span class="size-1.5 rounded-full bg-white/50"></span></span>
+  <section aria-label="تصویر محصول">
+    <div class="relative mx-auto aspect-[16/10] overflow-hidden rounded-2xl lg:aspect-square">
+      {% include "partials/product_media.html" with loading="eager" text_cls="text-6xl lg:text-7xl" %}
     </div>
-    <ul class="no-scrollbar mt-3 hidden gap-2 overflow-x-auto lg:flex">
-      {% for i in "1234" %}
-      <li><button type="button" class="block size-16 rounded-lg bg-gradient-to-br {{ product.tint }} {% if forloop.first %}ring-2 ring-brand-500 ring-offset-2{% else %}opacity-60{% endif %}" aria-label="تصویر {{ forloop.counter|fa }}"></button></li>
-      {% endfor %}
-    </ul>
   </section>
 
   {# Title, variants, highlights #}
   <section>
-    <p class="text-xs font-bold text-brand-600">{{ product.subtitle }}</p>
-    <h1 class="mt-1 text-xl font-black leading-9 text-slate-900">{{ product.title }}</h1>
+    {% if p.brand %}<p class="text-xs font-bold text-brand-600">{{ p.brand }}</p>{% endif %}
+    <h1 class="mt-1 text-xl font-black leading-9 text-slate-900">{{ p.title }}</h1>
     <p class="mt-1 text-xs text-slate-400">هنوز نظری ثبت نشده است</p>
 
     <hr class="my-4 border-slate-100">
 
     <h2 class="text-sm font-bold">انتخاب نوع اشتراک: <span class="text-brand-600" data-variant-name>{{ v.name }}</span></h2>
     <div class="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="نوع اشتراک">
-      {% for var in product.variants %}
-      <button type="button" role="radio" aria-checked="{% if forloop.first %}true{% else %}false{% endif %}"
+      {% for var in p.variants %}
+      <button type="button" role="radio" aria-checked="{% if var.obj.pk == v.obj.pk %}true{% else %}false{% endif %}"
               class="rounded-xl border-2 px-3 py-2 text-start text-sm transition aria-checked:border-brand-600 aria-checked:bg-brand-50 {% if var.in_stock %}border-slate-200 hover:border-slate-300{% else %}border-dashed border-slate-200 text-slate-400{% endif %}"
               data-variant
+              data-v-id="{{ var.obj.pk }}"
               data-v-name="{{ var.name }}"
               data-v-price="{{ var.price|price }}"
-              data-v-compare="{% if var.compare_at %}{{ var.compare_at|price }}{% endif %}"
-              data-v-off="{% discount_percent var.price var.compare_at %}"
+              data-v-compare="{% if var.compare_at_price and var.compare_at_price > var.price %}{{ var.compare_at_price|price }}{% endif %}"
+              data-v-off="{% discount_percent var.price var.compare_at_price %}"
               data-v-delivery="{{ var.delivery_label }}"
-              data-v-instant="{% if var.delivery == 'stock' %}1{% endif %}"
-              data-v-warranty="{{ var.warranty }}"
-              data-v-private="{% if var.account_type == 'private' %}1{% endif %}"
+              data-v-instant="{% if var.is_instant %}1{% endif %}"
+              data-v-warranty="{{ var.warranty_label }}"
+              data-v-private="{% if var.is_private %}1{% endif %}"
               data-v-stock="{% if var.in_stock %}1{% endif %}">
         <span class="block font-bold">{{ var.name }}</span>
         <span class="mt-0.5 block text-xs {% if var.in_stock %}text-slate-500{% endif %}">{% if var.in_stock %}{{ var.price|price }} تومان{% else %}ناموجود{% endif %}</span>
@@ -58,27 +55,28 @@
       اشتراک اختصاصی روی ایمیل خودتان فعال می‌شود. ایمیل را در مرحله تکمیل خرید وارد می‌کنید؛ رمز عبور شما را نمی‌خواهیم.
     </p>
 
+    {% if p.feature_list %}
     <h2 class="mt-6 text-sm font-bold">ویژگی‌ها</h2>
     <ul class="mt-3 space-y-2 text-sm text-slate-600">
-      {% for f in product.short_features %}
+      {% for f in p.feature_list %}
       <li class="flex items-center gap-2"><span class="size-1.5 rounded-full bg-slate-300"></span>{{ f }}</li>
       {% endfor %}
     </ul>
+    {% endif %}
   </section>
 
   {# Sticky buy box (desktop) #}
   <aside class="hidden lg:block" aria-label="خرید">
     <div class="card sticky top-32 bg-slate-50 p-4">
       <ul class="space-y-3 border-b border-slate-200 pb-4 text-sm">
-        <li class="flex items-start gap-2" data-delivery-row>{% include "partials/icon.html" with name="bolt" cls="size-5 text-success" %}<span data-delivery>{{ v.delivery_label }}</span></li>
-        <li class="flex items-start gap-2">{% include "partials/icon.html" with name="shield" cls="size-5 text-brand-600" %}<span data-warranty>{{ v.warranty }}</span></li>
+        <li class="flex items-start gap-2">{% include "partials/icon.html" with name="clock" cls="size-5 text-success" %}<span data-delivery>{{ v.delivery_label }}</span></li>
+        <li class="flex items-start gap-2">{% include "partials/icon.html" with name="shield" cls="size-5 text-brand-600" %}<span data-warranty>{{ v.warranty_label }}</span></li>
         <li class="flex items-start gap-2">{% include "partials/icon.html" with name="headset" cls="size-5 text-slate-500" %}<span>پشتیبانی از سایت و تلگرام</span></li>
       </ul>
-      <div class="pt-4" data-price-box>
+      <div class="pt-4">
         <div class="flex items-center justify-end gap-2">
-          <span class="text-xs text-slate-400 line-through" data-compare>{{ v.compare_at|price }}</span>
-          {% discount_percent v.price v.compare_at as off %}
-          <span class="rounded-full bg-sale px-1.5 text-xs leading-5 font-bold text-white" data-off-badge>{{ off }}٪</span>
+          <span class="text-xs text-slate-400 line-through" data-compare></span>
+          <span class="rounded-full bg-sale px-1.5 text-xs leading-5 font-bold text-white" data-off-badge hidden></span>
         </div>
         <p class="mt-1 text-end text-2xl font-black"><span data-price>{{ v.price|price }}</span> <span class="text-xs font-normal text-slate-500">تومان</span></p>
       </div>
@@ -91,27 +89,27 @@
 <div class="container-page mt-10" data-tabs>
   <div class="sticky top-[7.5rem] z-30 flex gap-6 overflow-x-auto border-b border-slate-200 bg-white text-sm lg:top-[8.25rem]" role="tablist">
     <button type="button" role="tab" aria-selected="true" data-tab="desc" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">معرفی و راهنما</button>
-    <button type="button" role="tab" aria-selected="false" data-tab="specs" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">مشخصات</button>
-    <button type="button" role="tab" aria-selected="false" data-tab="faq" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">پرسش‌ها</button>
-    <button type="button" role="tab" aria-selected="false" data-tab="warranty" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">گارانتی</button>
+    {% if p.specs.all %}<button type="button" role="tab" aria-selected="false" data-tab="specs" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">مشخصات</button>{% endif %}
+    {% if p.faqs.all %}<button type="button" role="tab" aria-selected="false" data-tab="faq" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">پرسش‌ها</button>{% endif %}
+    {% if p.warranty_text %}<button type="button" role="tab" aria-selected="false" data-tab="warranty" class="shrink-0 border-b-2 border-transparent py-3 font-bold text-slate-500 aria-selected:border-brand-600 aria-selected:text-brand-600">گارانتی</button>{% endif %}
   </div>
 
   <section role="tabpanel" data-panel="desc" class="py-6 text-sm leading-8 text-slate-600">
-    <h2 class="section-title">معرفی {{ product.title }}</h2>
-    <p class="mt-3">توضیح بلند محصول که از پنل مدیریت با ویرایشگر متن غنی نوشته می‌شود. این بخش جای اصلی محتوای سئو است.</p>
+    <h2 class="section-title">معرفی {{ p.title }}</h2>
+    <div class="mt-3">{{ p.description|linebreaks }}</div>
+    {% if p.usage_guide %}
     <h3 class="mt-6 font-bold text-slate-800">راهنمای استفاده</h3>
     <ol class="mt-2 list-inside space-y-1 [list-style-type:persian]">
-      <li>بعد از پرداخت، به صفحه سفارش بروید.</li>
-      <li>اطلاعات ورود یا وضعیت فعال‌سازی را ببینید.</li>
-      <li>در صورت بروز مشکل، روی «گزارش مشکل» بزنید.</li>
+      {% for line in p.usage_guide.splitlines %}{% if line.strip %}<li>{{ line }}</li>{% endif %}{% endfor %}
     </ol>
+    {% endif %}
   </section>
 
   <section role="tabpanel" data-panel="specs" class="hidden py-6">
     <h2 class="section-title">مشخصات</h2>
     <dl class="mt-4 divide-y divide-slate-100 text-sm">
-      {% for k, val in product.specs %}
-      <div class="grid grid-cols-[8rem_1fr] gap-4 py-3 lg:grid-cols-[12rem_1fr]"><dt class="text-slate-500">{{ k }}</dt><dd class="font-medium text-slate-800">{{ val }}</dd></div>
+      {% for s in p.specs.all %}
+      <div class="grid grid-cols-[8rem_1fr] gap-4 py-3 lg:grid-cols-[12rem_1fr]"><dt class="text-slate-500">{{ s.name }}</dt><dd class="font-medium text-slate-800">{{ s.value }}</dd></div>
       {% endfor %}
     </dl>
   </section>
@@ -119,10 +117,10 @@
   <section role="tabpanel" data-panel="faq" class="hidden py-6">
     <h2 class="section-title">پرسش‌های متداول</h2>
     <div class="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
-      {% for q, a in product.faqs %}
+      {% for f in p.faqs.all %}
       <details class="group p-4" {% if forloop.first %}open{% endif %}>
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold">{{ q }}<span class="transition group-open:rotate-180">{% include "partials/icon.html" with name="chevron-down" cls="size-4" %}</span></summary>
-        <p class="mt-3 text-sm leading-7 text-slate-600">{{ a }}</p>
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold">{{ f.question }}<span class="transition group-open:rotate-180">{% include "partials/icon.html" with name="chevron-down" cls="size-4" %}</span></summary>
+        <p class="mt-3 text-sm leading-7 text-slate-600">{{ f.answer|linebreaksbr }}</p>
       </details>
       {% endfor %}
     </div>
@@ -130,11 +128,12 @@
 
   <section role="tabpanel" data-panel="warranty" class="hidden py-6 text-sm leading-8 text-slate-600">
     <h2 class="section-title">شرایط گارانتی</h2>
-    <p class="mt-3">متن گارانتی محصول از پنل مدیریت. تعویض اکانت معیوب یا بازگشت وجه به نسبت روزهای باقی‌مانده. گارانتی با تعویض از نو شروع نمی‌شود.</p>
+    <div class="mt-3">{{ p.warranty_text|linebreaks }}</div>
   </section>
 </div>
+{% endwith %}
 
-{# Related products #}
+{% if related %}
 <section class="container-page mt-6" aria-labelledby="rel-title">
   <h2 id="rel-title" class="section-title">محصولات مشابه</h2>
   <ul class="no-scrollbar mt-4 flex overflow-x-auto rounded-xl border border-slate-200 [&>li]:border-e [&>li]:border-slate-100">
@@ -143,19 +142,19 @@
     {% endfor %}
   </ul>
 </section>
+{% endif %}
 
 {# Sticky buy bar (mobile) #}
 <div class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.04)] lg:hidden">
   <div class="flex items-center gap-3">
     <button type="button" class="btn-primary flex-1 py-3" data-add-to-cart>افزودن به سبد</button>
-    <div class="text-end" data-price-box>
+    <div class="text-end">
       <div class="flex items-center justify-end gap-1.5">
-        <span class="text-xs text-slate-400 line-through" data-compare>{{ v.compare_at|price }}</span>
-        <span class="rounded-full bg-sale px-1.5 text-[11px] leading-5 font-bold text-white" data-off-badge>{{ off }}٪</span>
+        <span class="text-xs text-slate-400 line-through" data-compare></span>
+        <span class="rounded-full bg-sale px-1.5 text-[11px] leading-5 font-bold text-white" data-off-badge hidden></span>
       </div>
-      <p class="text-lg font-black"><span data-price>{{ v.price|price }}</span> <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
+      <p class="text-lg font-black"><span data-price>{{ selected.price|price }}</span> <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
     </div>
   </div>
 </div>
-{% endwith %}
 {% endblock %}

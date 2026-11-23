@@ -33,37 +33,42 @@
     });
   });
 
-  // ---------- Search suggestions (sample data; will call the backend later) ----------
-  const SUGGESTIONS = [
-    { slug: "اشتراک-chatgpt-plus", title: "اشتراک ChatGPT Plus", keys: ["chatgpt", "چت جی پی تی", "چت‌جی‌پی‌تی", "openai", "gpt"] },
-    { slug: "اشتراک-جمینای", title: "اشتراک Gemini Advanced", keys: ["gemini", "جمینای", "جمنای", "هوش مصنوعی گوگل", "google"] },
-    { slug: "اشتراک-claude-pro", title: "اشتراک Claude Pro", keys: ["claude", "کلود", "anthropic"] },
-    { slug: "اشتراک-midjourney", title: "اشتراک Midjourney", keys: ["midjourney", "میدجرنی", "تولید تصویر"] },
-    { slug: "اشتراک-cursor-pro", title: "اشتراک Cursor Pro", keys: ["cursor", "کرسر", "برنامه نویسی"] },
-    { slug: "اشتراک-perplexity-pro", title: "اشتراک Perplexity Pro", keys: ["perplexity", "پرپلکسیتی"] },
-    { slug: "اشتراک-github-copilot", title: "اشتراک GitHub Copilot", keys: ["copilot", "کوپایلوت", "github"] },
-  ];
-  const norm = (s) => s.toLowerCase().replace(/\u200c/g, " ").replace(/ي/g, "ی").replace(/ك/g, "ک").trim();
+  // ---------- Search suggestions (from the backend) ----------
+  const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   $$("[data-search]").forEach((box) => {
     const input = $("[data-search-input]", box);
     const panel = $("[data-search-panel]", box);
     const list = $("[data-search-results]", box);
     if (!input) return;
+    let timer = null;
+    let controller = null;
 
-    const render = () => {
-      const q = norm(input.value);
-      if (!q) return panel.classList.add("hidden");
-      const hits = SUGGESTIONS.filter((s) => norm(s.title).includes(q) || s.keys.some((k) => norm(k).includes(q)));
-      list.innerHTML = hits.length
-        ? hits.map((h) => `<li><a href="/product/${encodeURIComponent(h.slug)}/" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50">🔍 ${h.title}</a></li>`).join("")
-        : `<li class="px-4 py-3 text-slate-500">نتیجه‌ای پیدا نشد؛ عبارت دیگری امتحان کنید.</li>`;
-      panel.classList.remove("hidden");
+    const render = async () => {
+      const q = input.value.trim();
+      if (q.length < 2) return panel.classList.add("hidden");
+      if (controller) controller.abort();
+      controller = new AbortController();
+      try {
+        const res = await fetch(`/search/suggest/?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        const { results } = await res.json();
+        list.innerHTML = results.length
+          ? results.map((h) => `<li><a href="${escapeHtml(h.url)}" class="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-slate-50"><span>${escapeHtml(h.title)}</span><span class="text-xs text-slate-400">${escapeHtml(h.price)}</span></a></li>`).join("")
+          : `<li class="px-4 py-3 text-slate-500">نتیجه‌ای پیدا نشد؛ عبارت دیگری امتحان کنید.</li>`;
+        panel.classList.remove("hidden");
+      } catch (err) {
+        if (err.name !== "AbortError") panel.classList.add("hidden");
+      }
     };
-    input.addEventListener("input", render);
+    input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 200); });
     input.addEventListener("focus", render);
     document.addEventListener("click", (e) => { if (!box.contains(e.target)) panel.classList.add("hidden"); });
   });
+
+  // ---------- Auto-submit filters (selects always; checkboxes only on desktop) ----------
+  $$("[data-autosubmit]").forEach((el) => el.addEventListener("change", () => {
+    if (el.tagName === "SELECT" || window.matchMedia("(min-width: 1024px)").matches) el.form.requestSubmit();
+  }));
 
   // ---------- Product page: variant picker ----------
   const product = $("[data-product]");
@@ -85,9 +90,13 @@
       });
       const drawerVariant = $("[data-drawer-variant]");
       if (drawerVariant) drawerVariant.textContent = d.vName;
+      const drawerTitle = $("[data-drawer-title]");
+      const h1 = $("main h1");
+      if (drawerTitle && h1) drawerTitle.textContent = h1.textContent;
     };
     buttons.forEach((b) => b.addEventListener("click", () => select(b)));
-    if (buttons[0]) select(buttons[0]);
+    const initial = buttons.find((b) => b.getAttribute("aria-checked") === "true") || buttons[0];
+    if (initial) select(initial);
   }
 
   $$("[data-add-to-cart]").forEach((btn) => btn.addEventListener("click", () => openDrawer("cart")));

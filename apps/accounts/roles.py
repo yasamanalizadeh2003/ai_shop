@@ -9,14 +9,40 @@ OPERATOR = "اپراتور"
 FINANCE = "مدیر مالی"
 MANAGER = "مدیر کل"
 
+CATALOG_VIEW = [
+    "catalog.view_category",
+    "catalog.view_product",
+    "catalog.view_variant",
+    "catalog.view_inventoryitem",
+]
+
+CATALOG_MANAGE = [
+    f"catalog.{action}_{model}"
+    for model in ("category", "product", "productspec", "productfaq", "variant", "redirect")
+    for action in ("view", "add", "change", "delete")
+] + [
+    "catalog.view_inventoryitem",
+    "catalog.add_inventoryitem",
+    "catalog.change_inventoryitem",
+    "catalog.reveal_inventoryitem",
+    "catalog.view_seller",
+    "core.view_exchangerate",
+    "core.add_exchangerate",
+    "core.view_auditlog",
+]
+
 ROLE_PERMISSIONS = {
     OPERATOR: [
         "accounts.view_customer",
+        *CATALOG_VIEW,
     ],
     FINANCE: [
         "accounts.view_customer",
+        *CATALOG_VIEW,
+        "core.view_exchangerate",
     ],
     MANAGER: [
+        *CATALOG_MANAGE,
         "accounts.view_customer",
         "accounts.change_customer",
         "auth.view_user",

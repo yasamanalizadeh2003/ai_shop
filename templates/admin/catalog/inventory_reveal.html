@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">خانه</a> ›
+  <a href="{% url 'admin:catalog_inventoryitem_changelist' %}">انبار</a> ›
+  <a href="{% url 'admin:catalog_inventoryitem_change' item.pk %}">#{{ item.pk }}</a> › نمایش اطلاعات
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <p class="errornote">این مشاهده با نام شما و زمان آن در لاگ عملیات ثبت شد.</p>
+  <h2>{{ item.variant }}</h2>
+  <p><b>داده خام:</b></p>
+  <pre dir="ltr" style="padding:1rem;background:#f6f6f6;white-space:pre-wrap">{{ value }}</pre>
+  {% if formatted != value %}
+  <p><b>نمایش به مشتری:</b></p>
+  <pre style="padding:1rem;background:#f6f6f6;white-space:pre-wrap">{{ formatted }}</pre>
+  {% endif %}
+  <p><a class="button" href="{% url 'admin:catalog_inventoryitem_change' item.pk %}">بازگشت</a></p>
+</div>
+{% endblock %}

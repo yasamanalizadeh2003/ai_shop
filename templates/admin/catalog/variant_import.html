@@ -1,0 +1,68 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">خانه</a> ›
+  <a href="{% url 'admin:catalog_variant_changelist' %}">تنوع‌ها</a> ›
+  <a href="{% url 'admin:catalog_variant_change' variant.pk %}">{{ variant }}</a> › ورود انبار
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <p>موجودی فعلی: <b>{{ variant.available_count }}</b> · آستانه هشدار: {{ variant.low_stock_threshold }}</p>
+
+  {% if preview %}
+    <h2>پیش‌نمایش</h2>
+    <ul>
+      <li>جدید: <b style="color:#1a7f37">{{ preview.new_rows|length }}</b></li>
+      <li>تکراری در همین فایل: {{ counts.duplicate_in_file }}</li>
+      <li>از قبل در انبار: {{ counts.duplicate_existing }}</li>
+      <li>نامعتبر: {{ counts.invalid }}</li>
+    </ul>
+    <table>
+      <thead><tr><th>خط</th><th>وضعیت</th><th>پیش‌نمایش (پنهان)</th></tr></thead>
+      <tbody>
+      {% for row in preview.rows %}
+        <tr>
+          <td>{{ row.line_no }}</td>
+          <td>
+            {% if row.status == "new" %}<span style="color:#1a7f37">جدید</span>
+            {% elif row.status == "duplicate_in_file" %}<span style="color:#b26b00">تکراری در فایل</span>
+            {% elif row.status == "duplicate_existing" %}<span style="color:#b26b00">از قبل در انبار</span>
+            {% else %}<span style="color:#c0392b">نامعتبر: {{ row.error }}</span>{% endif %}
+          </td>
+          <td dir="ltr"><code>{{ row.data|slice:":4" }}••••</code></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    {% if preview.new_rows %}
+    <form method="post" style="margin-top:1rem">
+      {% csrf_token %}
+      <textarea name="lines" hidden>{{ normalized_lines }}</textarea>
+      <input type="hidden" name="purchase_price" value="{{ form.cleaned_data.purchase_price|default:'' }}">
+      <input type="hidden" name="expires_at" value="{{ form.cleaned_data.expires_at|date:'Y-m-d' }}">
+      <input type="hidden" name="batch_label" value="{{ form.cleaned_data.batch_label|default:'' }}">
+      <input type="submit" name="confirm" class="default" value="ثبت {{ preview.new_rows|length }} آیتم جدید در انبار">
+      <a href="" class="button">انصراف</a>
+    </form>
+    {% endif %}
+  {% else %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        {% for field in form %}
+          <div class="form-row">
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+            {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="submit-row"><input type="submit" class="default" value="پیش‌نمایش"></div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -7,6 +7,8 @@ redis>=5.2
 django-celery-beat>=2.8
 django-otp>=1.6
 qrcode>=8.0
+cryptography>=44.0
+Pillow>=11.0
 gunicorn>=23.0; sys_platform != "win32"
 
 # dev / test

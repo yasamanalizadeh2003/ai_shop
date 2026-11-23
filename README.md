@@ -20,6 +20,7 @@ npm install
 npm run build:css        # هنگام توسعه: npm run watch:css
 copy .env.example .env   # سپس مقادیر را پر کنید
 .\.venv\Scripts\python manage.py migrate
+.\.venv\Scripts\python manage.py seed_catalog   # اختیاری: محصولات و انبار نمونه
 .\.venv\Scripts\python manage.py runserver
 ```
 

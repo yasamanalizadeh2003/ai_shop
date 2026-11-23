@@ -9,7 +9,7 @@
   {% include "partials/checkout_steps.html" with steps=checkout_steps current=1 %}
 </div>
 
-{% if empty %}
+{% if not cart_items %}
 <div class="container-page mt-8">
   <div class="card flex flex-col items-center px-4 py-14 text-center">
     <span class="grid size-24 place-items-center rounded-full bg-brand-50 text-brand-400">{% include "partials/icon.html" with name="cart" cls="size-11" %}</span>
