@@ -12,6 +12,8 @@ if settings.ADMIN_REQUIRE_2FA:
 admin.site.site_header = f"پنل مدیریت {settings.SITE_NAME}"
 admin.site.site_title = settings.SITE_NAME
 admin.site.index_title = "مدیریت فروشگاه"
+# The collapsible app sidebar steals a third of the width on laptops and squeezes wide forms.
+admin.site.enable_nav_sidebar = False
 
 urlpatterns = [
     path("admin/", admin.site.urls),

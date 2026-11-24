@@ -51,13 +51,18 @@ class FaqInline(admin.StackedInline):
     extra = 0
 
 
-class VariantInline(admin.TabularInline):
+class VariantInline(admin.StackedInline):
+    # Stacked with paired rows: a tabular inline with this many fields was ~2200px wide.
     model = Variant
     extra = 0
     show_change_link = True
     fields = (
-        "name", "delivery_type", "account_type", "pricing_mode", "fixed_price", "usd_price",
-        "margin_percent", "price", "compare_at_price", "duration_days", "status",
+        ("name", "status"),
+        ("delivery_type", "account_type"),
+        ("pricing_mode", "fixed_price"),
+        ("usd_price", "margin_percent"),
+        ("price", "compare_at_price"),
+        ("duration_days", "warranty_days", "delivery_deadline_hours"),
     )
     readonly_fields = ("price",)
 
@@ -69,7 +74,8 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ("status", "is_featured")
     search_fields = ("title", "brand", "keywords", "slug")
     prepopulated_fields = {"slug": ("title",)}
-    filter_horizontal = ("related",)
+    # A single searchable box; the two-pane filter_horizontal widget overflowed in RTL.
+    autocomplete_fields = ("related",)
     inlines = [VariantInline, SpecInline, FaqInline]
     fieldsets = (
         (None, {"fields": ("title", "brand", "slug", "category", "status", "is_featured", "sort_order")}),
