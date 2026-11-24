@@ -24,6 +24,7 @@ from apps.catalog.inventory import check_low_stock
 from apps.catalog.models import InventoryItem, Product, Variant
 from apps.core.models import SiteSettings
 from apps.notifications import team
+from apps.notifications.service import notify
 
 from . import discounts
 from .cart import summarize
@@ -137,6 +138,7 @@ def create_order(customer, cart, *, channel=Order.Channel.WEB, account_identifie
                     warranty_days=variant.warranty_days,
                     account_identifier=identifiers.get(line.item.pk) or "",
                     inventory_item=reserved[n] if reserved else None,
+                    renews_id=line.item.renews_id if n == 0 else None,
                 )
         if discount:
             DiscountRedemption.objects.create(discount=discount, order=order, customer=customer, amount=discount_amount)
@@ -192,8 +194,6 @@ def apply_payment(order_id, *, amount, payment_ref=""):
     Idempotent: calling it again for an already-paid order does nothing.
     Returns the order.
     """
-    from apps.notifications import sms
-
     refund_needed = False
     with transaction.atomic():
         order = Order.objects.select_for_update().get(pk=order_id)
@@ -226,30 +226,40 @@ def apply_payment(order_id, *, amount, payment_ref=""):
             if cart is not None:
                 clear(cart)
 
+    from .delivery import absolute
+
+    context = {"order_number": order.number, "amount": f"{order.total:,}", "order_url": absolute(order.get_absolute_url())}
     if refund_needed:
         team.alert("refund_required", f"پرداخت {order} بعد از انقضای رزرو رسید و موجودی نبود؛ بازگشت وجه لازم است.")
-        if order.customer.can_receive_sms:
-            try:
-                sms.get_backend().send_template(order.customer.mobile, "refund_required", {"order": order.number})
-            except Exception:
-                logger.exception("SMS failed for refund_required %s", order.pk)
+        notify(order.customer, "refund_required", context, key=f"refund_required:{order.pk}", email=order.notification_email)
+    else:
+        notify(order.customer, "payment_success", context, key=f"paid:{order.pk}", email=order.notification_email)
+        from .delivery import notify_item_delivered
+
+        for item in order.items.filter(status=OrderItem.Status.DELIVERED):
+            notify_item_delivered(item)
     return order
 
 
 def _fulfill(order):
     """Stock items are delivered immediately; manual items go to the operator queue."""
-    now = timezone.now()
+    from .delivery import _mark_renewal, create_delivery
+
+    now = order.paid_at or timezone.now()
     manual = 0
     touched_variants = set()
-    for item in order.items.select_related("inventory_item"):
+    for item in order.items.select_related("inventory_item", "variant"):
         if item.delivery_type == Variant.DeliveryType.STOCK and item.inventory_item_id:
             InventoryItem.objects.filter(pk=item.inventory_item_id).update(status=InventoryItem.Status.SOLD)
             item.status, item.delivered_at = OrderItem.Status.DELIVERED, now
+            create_delivery(item, now=now)
+            _mark_renewal(item, now)
             touched_variants.add(item.variant_id)
         else:
             item.status = OrderItem.Status.AWAITING_DELIVERY
+            item.deadline_at = now + timedelta(hours=item.variant.delivery_deadline_hours or 24)
             manual += 1
-        item.save(update_fields=["status", "delivered_at"])
+        item.save(update_fields=["status", "delivered_at", "deadline_at"])
         log_event(order, "item_" + item.status, item=item, to_status=item.status)
 
     old = order.status

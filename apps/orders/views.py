@@ -6,13 +6,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.accounts.session import get_customer
-from apps.catalog.inventory import format_delivery
-from apps.core import crypto
 from apps.payments import services as payment_services
 
 from . import cart as cart_ops
 from . import discounts, services
-from .models import Order
+from .delivery import delivery_text
+from .models import Delivery, Order, OrderItem
 
 
 def _wants_json(request):
@@ -145,6 +144,61 @@ def _owned_order(request, number):
 
 
 @require_POST
+def renew(request, delivery_id):
+    customer = get_customer(request)
+    if not customer:
+        return _login_redirect(request)
+    d = Delivery.objects.select_related("item__variant").filter(pk=delivery_id, item__order__customer=customer).first()
+    if d is None:
+        raise Http404
+    try:
+        cart_ops.renew(cart_ops.get_cart(request, create=True), d)
+    except cart_ops.CartError as exc:
+        messages.error(request, exc.message)
+        return redirect(d.item.order.get_absolute_url())
+    messages.success(request, "برای تمدید، همان اشتراک به سبد خرید اضافه شد.")
+    return redirect("storefront:cart")
+
+
+# ---------- customer account ----------
+
+def account_orders(request):
+    customer = get_customer(request)
+    if not customer:
+        return _login_redirect(request)
+    orders = customer.orders.prefetch_related("items").order_by("-created_at")[:50]
+    return render(request, "account/orders.html", {"orders": orders, "nav": "orders", "nav_active": "account"})
+
+
+def account_subscriptions(request):
+    customer = get_customer(request)
+    if not customer:
+        return _login_redirect(request)
+    now = timezone.now()
+    deliveries = (
+        Delivery.objects.filter(item__order__customer=customer, item__status=OrderItem.Status.DELIVERED)
+        .select_related("item__order")
+        .order_by("subscription_ends_at")
+    )
+    active = [d for d in deliveries if d.subscription_ends_at > now]
+    expired = [d for d in deliveries if d.subscription_ends_at <= now][-10:]
+    return render(request, "account/subscriptions.html", {"active": active, "expired": expired, "nav": "subscriptions", "nav_active": "account"})
+
+
+def account_settings(request):
+    customer = get_customer(request)
+    if not customer:
+        return _login_redirect(request)
+    if request.method == "POST":
+        customer.notify_reminders = request.POST.get("notify_reminders") == "1"
+        customer.notify_marketing = request.POST.get("notify_marketing") == "1"
+        customer.save(update_fields=["notify_reminders", "notify_marketing"])
+        messages.success(request, "تنظیمات ذخیره شد.")
+        return redirect("orders:account_settings")
+    return render(request, "account/settings.html", {"nav": "settings", "nav_active": "account"})
+
+
+@require_POST
 def order_pay(request, number):
     order = _owned_order(request, number)
     if order is None:
@@ -152,20 +206,28 @@ def order_pay(request, number):
     return _go_to_gateway(request, order)
 
 
+def _login_redirect(request):
+    return redirect(f"{reverse('storefront:checkout')}?step=login&next={request.get_full_path()}")
+
+
 def order_detail(request, number):
     if not get_customer(request):
-        return redirect(f"{reverse('storefront:checkout')}?step=login")
+        return _login_redirect(request)
     order = _owned_order(request, number)
     if order is None:
         raise Http404
 
+    now = timezone.now()
     items = []
-    for item in order.items.all():
-        delivery = None
-        if item.status == item.Status.DELIVERED and item.inventory_item_id:
-            raw = crypto.decrypt(item.inventory_item.encrypted_data, f"variant:{item.variant_id}".encode())
-            delivery = format_delivery(item.variant, raw)
-        items.append({"item": item, "delivery": delivery})
+    for item in order.items.select_related("delivery", "inventory_item", "variant"):
+        d = getattr(item, "delivery", None)
+        items.append({
+            "item": item,
+            "delivery": d,
+            "text": delivery_text(item) if item.status == item.Status.DELIVERED else "",
+            "active": bool(d and d.subscription_ends_at > now),
+            "in_warranty": bool(d and d.warranty_ends_at > now),
+        })
 
     seconds_left = max(0, int((order.reserved_until - timezone.now()).total_seconds())) if order.is_payable else 0
     if order.is_payable and seconds_left == 0:

@@ -11,15 +11,20 @@ from .session import login_customer, logout_customer
 
 PENDING_MOBILE_KEY = "otp_mobile"
 RESEND_AT_KEY = "otp_resend_at"
+LOGIN_NEXT_KEY = "login_next"
 
 
 def _client_ip(request):
     return request.META.get("REMOTE_ADDR")
 
 
+def _is_safe(request, url):
+    return url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}, require_https=request.is_secure())
+
+
 def _safe_next(request, default):
     nxt = request.POST.get("next") or request.GET.get("next")
-    if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+    if nxt and _is_safe(request, nxt):
         return nxt
     return default
 
@@ -62,10 +67,12 @@ def verify_code(request):
             return redirect(_checkout_url("otp") + "&expired=1")
         return redirect(_checkout_url("otp"))
 
+    stored_next = request.session.pop(LOGIN_NEXT_KEY, None)
     login_customer(request, customer)
     request.session.pop(PENDING_MOBILE_KEY, None)
     request.session.pop(RESEND_AT_KEY, None)
-    return redirect(_safe_next(request, _checkout_url("info")))
+    default = stored_next if stored_next and _is_safe(request, stored_next) else _checkout_url("info")
+    return redirect(_safe_next(request, default))
 
 
 @require_POST

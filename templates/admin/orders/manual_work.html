@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">خانه</a> ›
+  <a href="{% url 'admin:orders_manualqueueitem_changelist' %}">صف تحویل دستی</a> › {{ item }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <fieldset class="module aligned">
+    <h2>مشخصات</h2>
+    <div class="form-row"><label>سفارش:</label> <a href="{% url 'admin:orders_order_change' item.order_id %}">{{ item.order.number }}</a> · پرداخت {{ item.order.paid_at|jdate:"datetime" }}</div>
+    <div class="form-row"><label>کالا:</label> {{ item.product_title }} — {{ item.variant_name }}</div>
+    <div class="form-row"><label>ایمیل / جیمیل مشتری:</label> <b dir="ltr">{{ item.account_identifier|default:"—" }}</b></div>
+    <div class="form-row"><label>مهلت تحویل:</label> {{ item.deadline_at|jdate:"datetime" }}</div>
+    <div class="form-row"><label>اپراتور:</label> {{ item.assigned_to|default:"هنوز برداشته نشده" }}</div>
+  </fieldset>
+
+  {% if not item.assigned_to %}
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="action" value="claim">
+      <input type="submit" class="default" value="برداشتن این قلم">
+    </form>
+  {% endif %}
+
+  {% if is_mine or not item.assigned_to %}
+  <form method="post" style="margin-top:1.5rem">{% csrf_token %}
+    <input type="hidden" name="action" value="deliver">
+    <fieldset class="module aligned">
+      <h2>ثبت تحویل</h2>
+      {% for field in deliver_form %}
+        <div class="form-row">{{ field.errors }}{{ field.label_tag }} {{ field }}{% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}</div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row"><input type="submit" class="default" value="ثبت تحویل و اطلاع به مشتری"></div>
+  </form>
+
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="reject">
+    <fieldset class="module aligned">
+      <h2>رد کردن (ارسال به صف بازگشت وجه)</h2>
+      {% for field in reject_form %}
+        <div class="form-row">{{ field.errors }}{{ field.label_tag }} {{ field }}</div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row"><input type="submit" value="رد کردن قلم" style="background:#ba2121"></div>
+  </form>
+  {% else %}
+    <p class="errornote">این قلم را {{ item.assigned_to }} برداشته است.</p>
+  {% endif %}
+</div>
+{% endblock %}

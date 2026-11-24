@@ -180,7 +180,8 @@ def test_payment_after_expiry_without_stock_goes_to_refund_queue(stock_variant, 
     assert late.paid_at is not None
     assert not late.items.filter(inventory_item__isnull=False).exists()
     assert any(m["kind"] == "refund_required" for m in MemoryTeamBackend.outbox)
-    assert sms_outbox and sms_outbox[-1]["template"] == "refund_required"
+    from apps.notifications.models import Message
+    assert Message.objects.filter(customer=customer, event="refund_required", channel="sms").exists()
 
 
 @pytest.mark.django_db

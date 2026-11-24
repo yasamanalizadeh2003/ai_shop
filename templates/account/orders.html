@@ -1,0 +1,31 @@
+{% extends "account/base.html" %}
+
+{% block title %}سفارش‌های من | {{ SITE_NAME }}{% endblock %}
+
+{% block account_content %}
+<h1 class="text-lg font-extrabold">سفارش‌های من</h1>
+{% if orders %}
+<ul class="mt-4 space-y-3">
+  {% for order in orders %}
+  <li>
+    <a href="{{ order.get_absolute_url }}" class="card flex flex-wrap items-center justify-between gap-3 p-4 hover:border-brand-200">
+      <div>
+        <p class="text-sm font-bold">سفارش {{ order.number|fa }}</p>
+        <p class="mt-1 text-xs text-slate-500">{{ order.created_at|jdate:"datetime" }} · {{ order.items.all|length|fa }} قلم</p>
+      </div>
+      <div class="text-end">
+        <p class="text-sm font-bold">{{ order.total|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
+        <p class="mt-1 text-xs {% if order.status == 'delivered' %}text-success{% elif order.status == 'pending_payment' %}text-amber-700{% else %}text-slate-500{% endif %}">{{ order.get_status_display }}{% if order.needs_refund %} · بازگشت وجه{% endif %}</p>
+      </div>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="card mt-4 flex flex-col items-center px-4 py-12 text-center">
+  <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-400">{% include "partials/icon.html" with name="box" cls="size-9" %}</span>
+  <p class="mt-4 font-bold">هنوز سفارشی ثبت نکرده‌اید</p>
+  <a href="{% url 'storefront:home' %}" class="btn-primary mt-4">رفتن به فروشگاه</a>
+</div>
+{% endif %}
+{% endblock %}

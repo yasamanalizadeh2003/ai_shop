@@ -34,6 +34,7 @@ class CartItem(models.Model):
     variant = models.ForeignKey(Variant, on_delete=models.CASCADE)
     quantity = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(MAX_QUANTITY)])
     account_identifier = models.CharField(max_length=254, blank=True)
+    renews = models.ForeignKey("Delivery", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -158,6 +159,13 @@ class OrderItem(models.Model):
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AWAITING_PAYMENT, db_index=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
+    # Manual delivery queue
+    deadline_at = models.DateTimeField("مهلت تحویل", null=True, blank=True, db_index=True)
+    assigned_to = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+                                    verbose_name="اپراتور")
+    claimed_at = models.DateTimeField("زمان برداشتن", null=True, blank=True)
+    overdue_alerted = models.BooleanField(default=False)
+    renews = models.ForeignKey("Delivery", null=True, blank=True, on_delete=models.SET_NULL, related_name="renewed_by_items")
 
     class Meta:
         verbose_name = "قلم سفارش"
@@ -166,6 +174,36 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product_title} · {self.variant_name}"
+
+
+class ManualQueueItem(OrderItem):
+    """Admin view of order items waiting for an operator to deliver them."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "قلم منتظر تحویل دستی"
+        verbose_name_plural = "صف تحویل دستی"
+
+
+class Delivery(models.Model):
+    """A delivered unit: when its subscription and warranty end, and whether it was renewed."""
+
+    item = models.OneToOneField(OrderItem, on_delete=models.CASCADE, related_name="delivery", verbose_name="قلم")
+    delivered_at = models.DateTimeField("زمان تحویل")
+    subscription_ends_at = models.DateTimeField("پایان اشتراک", db_index=True)
+    warranty_ends_at = models.DateTimeField("پایان گارانتی")
+    encrypted_note = models.BinaryField("اطلاعات تحویل دستی (رمزنگاری‌شده)", null=True, blank=True, editable=False)
+    delivered_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+                                     verbose_name="تحویل‌دهنده")
+    renewed_at = models.DateTimeField("زمان تمدید", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "تحویل"
+        verbose_name_plural = "تحویل‌ها"
+        ordering = ["-delivered_at"]
+
+    def __str__(self):
+        return f"تحویل {self.item}"
 
 
 class OrderEvent(models.Model):

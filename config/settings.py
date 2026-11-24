@@ -92,7 +92,12 @@ OTP_MAX_ATTEMPTS = env.int("OTP_MAX_ATTEMPTS", default=5)
 OTP_MAX_PER_MOBILE_PER_HOUR = env.int("OTP_MAX_PER_MOBILE_PER_HOUR", default=5)
 OTP_MAX_PER_IP_PER_HOUR = env.int("OTP_MAX_PER_IP_PER_HOUR", default=20)
 
+SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
+
 SMS_BACKEND = env("SMS_BACKEND", default="apps.notifications.sms.ConsoleSmsBackend")
+TELEGRAM_BACKEND = env("TELEGRAM_BACKEND", default="apps.notifications.channels.LogTelegramBackend")
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@localhost")
 TEAM_ALERT_BACKEND = env("TEAM_ALERT_BACKEND", default="apps.notifications.team.LogTeamBackend")
 
 # Two-factor authentication (TOTP) is required for the admin panel.
@@ -146,6 +151,10 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_BEAT_SCHEDULE = {
     "expire-reservations": {"task": "apps.orders.tasks.expire_reservations", "schedule": 60.0},
     "inquire-pending-payments": {"task": "apps.payments.tasks.inquire_pending_payments", "schedule": 180.0},
+    "send-due-messages": {"task": "apps.notifications.tasks.send_due_messages", "schedule": 60.0},
+    "expiry-reminders": {"task": "apps.orders.tasks.send_expiry_reminders", "schedule": 3600.0},
+    "expiry-notices": {"task": "apps.orders.tasks.send_expiry_notices", "schedule": 3600.0},
+    "overdue-manual-items": {"task": "apps.orders.tasks.alert_overdue_manual_items", "schedule": 300.0},
 }
 
 REST_FRAMEWORK = {

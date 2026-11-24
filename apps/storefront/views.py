@@ -9,7 +9,9 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET
 
 from apps.accounts.session import get_customer
-from apps.accounts.views import PENDING_MOBILE_KEY, RESEND_AT_KEY
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from apps.accounts.views import LOGIN_NEXT_KEY, PENDING_MOBILE_KEY, RESEND_AT_KEY
 from apps.catalog import selectors
 from apps.catalog.models import Category
 from apps.core.templatetags.persian import price as fa_price
@@ -158,11 +160,16 @@ def checkout(request):
     step = request.GET.get("step", "")
     pending_mobile = request.session.get(PENDING_MOBILE_KEY)
 
+    nxt = request.GET.get("next")
     if customer:
+        if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
+            return redirect(nxt)
         # Signed-in customers skip the login steps.
         if step != "info":
             return redirect(f"{reverse('storefront:checkout')}?step=info")
     else:
+        if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
+            request.session[LOGIN_NEXT_KEY] = nxt
         if step == "info":
             return redirect(f"{reverse('storefront:checkout')}?step=login")
         if step == "otp" and not pending_mobile:

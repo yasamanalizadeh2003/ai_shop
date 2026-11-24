@@ -1,0 +1,57 @@
+{% extends "account/base.html" %}
+
+{% block title %}اشتراک‌های فعال | {{ SITE_NAME }}{% endblock %}
+
+{% block account_content %}
+<h1 class="text-lg font-extrabold">اشتراک‌های فعال</h1>
+{% if active %}
+<ul class="mt-4 grid gap-3 sm:grid-cols-2">
+  {% for d in active %}
+  {% with left=d.subscription_ends_at|days_left %}
+  <li class="card p-4">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <p class="text-sm font-bold">{{ d.item.product_title }}</p>
+        <p class="mt-1 text-xs text-slate-500">{{ d.item.variant_name }}</p>
+      </div>
+      <span class="rounded-full px-2 py-0.5 text-xs font-bold {% if left <= 3 %}bg-red-50 text-red-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">{{ left|fa }} روز مانده</span>
+    </div>
+    <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+      <div class="h-full rounded-full {% if left <= 3 %}bg-sale{% else %}bg-brand-600{% endif %}" style="width: {% widthratio left d.item.duration_days 100 %}%"></div>
+    </div>
+    <dl class="mt-3 space-y-1 text-xs text-slate-500">
+      <div class="flex justify-between"><dt>پایان اشتراک</dt><dd class="font-bold text-slate-700">{{ d.subscription_ends_at|jdate:"long" }}</dd></div>
+      <div class="flex justify-between"><dt>پایان گارانتی</dt><dd>{{ d.warranty_ends_at|jdate:"long" }}</dd></div>
+    </dl>
+    <div class="mt-3 flex gap-2">
+      <a href="{{ d.item.order.get_absolute_url }}" class="btn-ghost flex-1 border border-slate-200 text-xs">جزئیات</a>
+      {% if d.renewed_at %}
+        <span class="btn flex-1 bg-emerald-50 text-xs text-emerald-700">تمدید شده</span>
+      {% else %}
+        <form method="post" action="{% url 'orders:renew' d.pk %}" class="flex-1">{% csrf_token %}<button type="submit" class="btn-primary w-full text-xs">تمدید</button></form>
+      {% endif %}
+    </div>
+  </li>
+  {% endwith %}
+  {% endfor %}
+</ul>
+{% else %}
+<div class="card mt-4 flex flex-col items-center px-4 py-12 text-center">
+  <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-400">{% include "partials/icon.html" with name="clock" cls="size-9" %}</span>
+  <p class="mt-4 font-bold">اشتراک فعالی ندارید</p>
+  <a href="{% url 'storefront:home' %}" class="btn-primary mt-4">مشاهده اشتراک‌ها</a>
+</div>
+{% endif %}
+
+{% if expired %}
+<h2 class="mt-8 text-sm font-bold text-slate-500">اشتراک‌های تمام‌شده</h2>
+<ul class="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white text-sm">
+  {% for d in expired %}
+  <li class="flex items-center justify-between gap-3 p-3">
+    <span>{{ d.item.product_title }} · <span class="text-xs text-slate-500">{{ d.subscription_ends_at|jdate:"long" }}</span></span>
+    {% if not d.renewed_at %}<form method="post" action="{% url 'orders:renew' d.pk %}">{% csrf_token %}<button type="submit" class="text-xs font-bold text-brand-600">خرید دوباره</button></form>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

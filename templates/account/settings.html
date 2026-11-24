@@ -1,0 +1,30 @@
+{% extends "account/base.html" %}
+
+{% block title %}تنظیمات پیامک | {{ SITE_NAME }}{% endblock %}
+
+{% block account_content %}
+<h1 class="text-lg font-extrabold">تنظیمات پیامک</h1>
+<form method="post" class="card mt-4 divide-y divide-slate-100">
+  {% csrf_token %}
+  <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
+    <span>
+      <span class="block text-sm font-bold">یادآوری تمدید</span>
+      <span class="mt-1 block text-xs text-slate-500">۳ روز قبل از پایان هر اشتراک و روز پایان آن.</span>
+    </span>
+    <input type="checkbox" name="notify_reminders" value="1" class="peer sr-only" {% if customer.notify_reminders %}checked{% endif %}>
+    <span class="relative h-6 w-10 shrink-0 rounded-full bg-slate-300 transition peer-checked:bg-brand-600 after:absolute after:top-1 after:start-1 after:size-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-[-1rem]"></span>
+  </label>
+  <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
+    <span>
+      <span class="block text-sm font-bold">پیشنهادها و تخفیف‌ها</span>
+      <span class="mt-1 block text-xs text-slate-500">پیامک‌های تبلیغاتی و کدهای تخفیف.</span>
+    </span>
+    <input type="checkbox" name="notify_marketing" value="1" class="peer sr-only" {% if customer.notify_marketing %}checked{% endif %}>
+    <span class="relative h-6 w-10 shrink-0 rounded-full bg-slate-300 transition peer-checked:bg-brand-600 after:absolute after:top-1 after:start-1 after:size-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-[-1rem]"></span>
+  </label>
+  <div class="p-4">
+    <p class="text-xs leading-6 text-slate-500">پیامک‌های مربوط به سفارش (پرداخت، تحویل، بازگشت وجه) و کد ورود همیشه ارسال می‌شوند.</p>
+    <button type="submit" class="btn-primary mt-3">ذخیره</button>
+  </div>
+</form>
+{% endblock %}

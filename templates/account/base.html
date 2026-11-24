@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}bg-slate-50 pb-20 lg:pb-0{% endblock %}
+
+{% block content %}
+<div class="container-page grid items-start gap-4 py-6 lg:grid-cols-[16rem_1fr]">
+  <aside class="card p-4">
+    <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+      <span class="grid size-11 place-items-center rounded-full bg-brand-50 text-brand-600">{% include "partials/icon.html" with name="user" cls="size-6" %}</span>
+      <div>
+        <p class="text-sm font-bold" dir="ltr">{{ customer.mobile|fa }}</p>
+        <p class="text-xs text-slate-500">عضو از {{ customer.created_at|jdate:"long" }}</p>
+      </div>
+    </div>
+    <nav class="no-scrollbar -mx-1 mt-3 flex gap-1 overflow-x-auto text-sm lg:flex-col" aria-label="حساب کاربری">
+      <a href="{% url 'orders:account_orders' %}" class="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 {% if nav == 'orders' %}bg-brand-50 font-bold text-brand-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">{% include "partials/icon.html" with name="box" cls="size-4" %} سفارش‌ها</a>
+      <a href="{% url 'orders:account_subscriptions' %}" class="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 {% if nav == 'subscriptions' %}bg-brand-50 font-bold text-brand-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">{% include "partials/icon.html" with name="clock" cls="size-4" %} اشتراک‌های فعال</a>
+      <a href="{% url 'orders:account_settings' %}" class="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 {% if nav == 'settings' %}bg-brand-50 font-bold text-brand-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">{% include "partials/icon.html" with name="phone" cls="size-4" %} تنظیمات پیامک</a>
+      <form method="post" action="{% url 'accounts:logout' %}" class="shrink-0 lg:mt-2 lg:border-t lg:border-slate-100 lg:pt-2">{% csrf_token %}
+        <button type="submit" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-50 hover:text-sale">خروج</button>
+      </form>
+    </nav>
+  </aside>
+  <section class="min-w-0">
+    {% include "partials/messages.html" %}
+    {% block account_content %}{% endblock %}
+  </section>
+</div>
+{% endblock %}

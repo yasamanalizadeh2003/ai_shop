@@ -61,13 +61,25 @@ def _buyable_variant(variant_id):
     return variant
 
 
-def add(cart, variant_id, quantity=1):
+def renew(cart, delivery):
+    """'Renew' button: put the same variant in the cart, remembering which delivery it renews."""
+    item = add(cart, delivery.item.variant_id, 1, allow_existing=True)
+    item.renews = delivery
+    if delivery.item.account_identifier and not item.account_identifier:
+        item.account_identifier = delivery.item.account_identifier
+    item.save(update_fields=["renews", "account_identifier"])
+    return item
+
+
+def add(cart, variant_id, quantity=1, *, allow_existing=False):
     variant = _buyable_variant(variant_id)
     limit = max_quantity(variant)
     with transaction.atomic():
         item, created = CartItem.objects.select_for_update().get_or_create(
             cart=cart, variant=variant, defaults={"quantity": min(quantity, limit)}
         )
+        if not created and allow_existing:
+            return item
         if not created:
             if item.quantity >= limit:
                 raise CartError(
@@ -118,7 +130,7 @@ def merge_guest_cart_on_login(sender, request, customer, **kwargs):
                 existing.save(update_fields=["quantity"])
             else:
                 CartItem.objects.create(cart=target, variant=item.variant, quantity=min(item.quantity, limit),
-                                        account_identifier=item.account_identifier)
+                                        account_identifier=item.account_identifier, renews=item.renews)
         if guest.discount_code and not target.discount_code:
             target.discount_code = guest.discount_code
         if guest.notification_email and not target.notification_email:

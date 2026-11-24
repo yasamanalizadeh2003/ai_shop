@@ -12,4 +12,8 @@ urlpatterns = [
     path("checkout/place-order/", views.place_order, name="place_order"),
     path("orders/<int:number>/", views.order_detail, name="detail"),
     path("orders/<int:number>/pay/", views.order_pay, name="pay"),
+    path("renew/<int:delivery_id>/", views.renew, name="renew"),
+    path("account/", views.account_orders, name="account_orders"),
+    path("account/subscriptions/", views.account_subscriptions, name="account_subscriptions"),
+    path("account/settings/", views.account_settings, name="account_settings"),
 ]
