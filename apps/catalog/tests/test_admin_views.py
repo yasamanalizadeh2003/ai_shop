@@ -101,6 +101,32 @@ def test_inventory_list_never_shows_plaintext(client, admin_user):
 
 
 @pytest.mark.django_db
+def test_product_page_warns_about_empty_stock(client, admin_user):
+    _otp_login(client, admin_user)
+    variant = make_variant(name="یک ماهه")
+    url = reverse("admin:catalog_product_change", args=[variant.product_id])
+
+    html = client.get(url).content.decode()
+    assert "انبارش خالی است" in html
+    assert "انبار خالی — در سایت «ناموجود» است" in html
+    assert "ناموجود: یک ماهه" in client.get(reverse("admin:catalog_product_changelist")).content.decode()
+
+    inventory.import_items(variant, ["a|1"])
+    html = client.get(url).content.decode()
+    assert "انبارش خالی است" not in html
+    assert "1 عدد موجود" in html
+
+
+@pytest.mark.django_db
+def test_manual_variant_has_no_stock_warning(client, admin_user):
+    _otp_login(client, admin_user)
+    variant = make_variant(delivery_type="manual", delivery_deadline_hours=3)
+    html = client.get(reverse("admin:catalog_product_change", args=[variant.product_id])).content.decode()
+    assert "انبارش خالی است" not in html
+    assert "انبار لازم نیست" in html
+
+
+@pytest.mark.django_db
 def test_exchange_rate_admin_reprices(client, admin_user):
     from decimal import Decimal
 

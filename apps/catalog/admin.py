@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
 from apps.core.crypto import DecryptionError
@@ -41,6 +42,23 @@ class CategoryAdmin(admin.ModelAdmin):
         return obj._products
 
 
+def stock_badge(variant):
+    """Stock count with a red warning when an automatic-delivery variant has nothing to sell."""
+    if not variant or not variant.pk:
+        return "پس از ذخیره"
+    if variant.delivery_type == Variant.DeliveryType.MANUAL:
+        return mark_safe('<span style="color:#555">تحویل دستی — انبار لازم نیست</span>')
+    available = variant.available_count()
+    link = reverse("admin:catalog_variant_import", args=[variant.pk])
+    if available == 0:
+        return format_html(
+            '<b style="color:#fff;background:#ba2121;padding:2px 8px;border-radius:4px">انبار خالی — در سایت «ناموجود» است</b> '
+            '<a class="button" href="{}">ورود آیتم‌های انبار</a>', link,
+        )
+    color = "#b26b00" if available < variant.low_stock_threshold else "#1a7f37"
+    return format_html('<b style="color:{}">{} عدد موجود</b> <a href="{}">افزودن</a>', color, available, link)
+
+
 class SpecInline(admin.TabularInline):
     model = ProductSpec
     extra = 0
@@ -58,18 +76,23 @@ class VariantInline(admin.StackedInline):
     show_change_link = True
     fields = (
         ("name", "status"),
-        ("delivery_type", "account_type"),
+        ("delivery_type", "stock_status"),
+        ("account_type",),
         ("pricing_mode", "fixed_price"),
         ("usd_price", "margin_percent"),
         ("price", "compare_at_price"),
         ("duration_days", "warranty_days", "delivery_deadline_hours"),
     )
-    readonly_fields = ("price",)
+    readonly_fields = ("price", "stock_status")
+
+    @admin.display(description="موجودی انبار")
+    def stock_status(self, obj):
+        return stock_badge(obj)
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "status", "is_featured", "variant_count", "updated_at")
+    list_display = ("title", "category", "status", "is_featured", "variant_count", "sellable", "updated_at")
     list_filter = ("status", "category", "is_featured")
     list_editable = ("status", "is_featured")
     search_fields = ("title", "brand", "keywords", "slug")
@@ -90,6 +113,31 @@ class ProductAdmin(admin.ModelAdmin):
     @admin.display(description="تنوع‌ها", ordering="_variants")
     def variant_count(self, obj):
         return obj._variants
+
+    @admin.display(description="فروش")
+    def sellable(self, obj):
+        empty = empty_stock_variants(obj)
+        if empty:
+            return format_html('<b style="color:#ba2121">ناموجود: {}</b>', "، ".join(v.name for v in empty))
+        return mark_safe('<span style="color:#1a7f37">✔</span>')
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        obj = self.get_object(request, object_id)
+        if obj is not None and request.method == "GET":
+            for v in empty_stock_variants(obj):
+                messages.warning(
+                    request,
+                    f"تنوع «{v.name}» تحویل خودکار از انبار دارد ولی انبارش خالی است، پس در سایت «ناموجود» نمایش داده می‌شود. "
+                    "آیتم وارد انبار کنید یا نوع تحویل را «دستی» کنید.",
+                )
+        return super().change_view(request, object_id, form_url, extra_context)
+
+
+def empty_stock_variants(product):
+    return [
+        v for v in product.variants.filter(status=Variant.Status.ACTIVE, delivery_type=Variant.DeliveryType.STOCK)
+        if v.available_count() == 0
+    ]
 
 
 class ImportForm(forms.Form):
@@ -131,7 +179,9 @@ class VariantAdmin(admin.ModelAdmin):
             return "دستی"
         available = getattr(obj, "_available", None)
         if available is None:
-            available = obj.available_count()
+            return stock_badge(obj)
+        if available == 0:
+            return mark_safe('<b style="color:#ba2121">خالی (ناموجود)</b>')
         color = "#c0392b" if available < obj.low_stock_threshold else "inherit"
         return format_html('<b style="color:{}">{}</b>', color, available)
 
