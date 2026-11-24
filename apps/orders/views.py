@@ -234,11 +234,16 @@ def order_detail(request, number):
         services.expire_order(order.pk)
         order.refresh_from_db()
 
+    track_purchase = request.session.get("track_purchase") == order.pk
+    if track_purchase:
+        request.session.pop("track_purchase", None)
     response = render(request, "orders/detail.html", {
         "order": order,
         "items": items,
         "seconds_left": seconds_left,
         "last_payment": order.payments.order_by("-created_at").first(),
+        "track_purchase": track_purchase,
+        "nav_active": "account",
     })
     response["Cache-Control"] = "no-store"
     return response

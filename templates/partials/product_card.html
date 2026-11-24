@@ -8,7 +8,7 @@
 
   <div class="mt-2 flex min-h-5 flex-wrap gap-1">
     {% if not p.in_stock %}
-      <span class="badge bg-slate-100 text-slate-500">ناموجود</span>
+      <span class="badge bg-slate-100 text-slate-600">ناموجود</span>
     {% elif p.instant %}
       <span class="badge bg-emerald-50 text-success">{% include "partials/icon.html" with name="bolt" cls="size-3" sw="2.4" %} تحویل فوری</span>
     {% endif %}
@@ -23,9 +23,9 @@
         {% if off %}<span class="rounded-full bg-sale px-1.5 text-xs leading-5 font-bold text-white">{{ off }}٪</span>{% else %}<span></span>{% endif %}
         <p class="text-base font-extrabold text-slate-900">{{ p.price|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
       </div>
-      {% if p.compare_at %}<p class="text-end text-xs text-slate-400 line-through">{{ p.compare_at|price }}</p>{% else %}<p class="h-4"></p>{% endif %}
+      {% if p.compare_at %}<p class="text-end text-xs text-slate-500 line-through">{{ p.compare_at|price }}</p>{% else %}<p class="h-4"></p>{% endif %}
     {% else %}
-      <p class="py-2 text-sm font-bold text-slate-400">ناموجود</p>
+      <p class="py-2 text-sm font-bold text-slate-500">ناموجود</p>
     {% endif %}
   </div>
 </a>

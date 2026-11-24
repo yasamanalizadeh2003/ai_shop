@@ -24,7 +24,7 @@
   <section>
     {% if p.brand %}<p class="text-xs font-bold text-brand-600">{{ p.brand }}</p>{% endif %}
     <h1 class="mt-1 text-xl font-black leading-9 text-slate-900">{{ p.title }}</h1>
-    <p class="mt-1 text-xs text-slate-400">هنوز نظری ثبت نشده است</p>
+    <p class="mt-1 text-xs text-slate-500">هنوز نظری ثبت نشده است</p>
 
     <hr class="my-4 border-slate-100">
 
@@ -32,7 +32,7 @@
     <div class="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="نوع اشتراک">
       {% for var in p.variants %}
       <button type="button" role="radio" aria-checked="{% if var.obj.pk == v.obj.pk %}true{% else %}false{% endif %}"
-              class="rounded-xl border-2 px-3 py-2 text-start text-sm transition aria-checked:border-brand-600 aria-checked:bg-brand-50 {% if var.in_stock %}border-slate-200 hover:border-slate-300{% else %}border-dashed border-slate-200 text-slate-400{% endif %}"
+              class="rounded-xl border-2 px-3 py-2 text-start text-sm transition aria-checked:border-brand-600 aria-checked:bg-brand-50 {% if var.in_stock %}border-slate-200 hover:border-slate-300{% else %}border-dashed border-slate-200 text-slate-500{% endif %}"
               data-variant
               data-v-id="{{ var.obj.pk }}"
               data-v-name="{{ var.name }}"
@@ -75,7 +75,7 @@
       </ul>
       <div class="pt-4">
         <div class="flex items-center justify-end gap-2">
-          <span class="text-xs text-slate-400 line-through" data-compare></span>
+          <span class="text-xs text-slate-500 line-through" data-compare></span>
           <span class="rounded-full bg-sale px-1.5 text-xs leading-5 font-bold text-white" data-off-badge hidden></span>
         </div>
         <p class="mt-1 text-end text-2xl font-black"><span data-price>{{ v.price|price }}</span> <span class="text-xs font-normal text-slate-500">تومان</span></p>
@@ -96,7 +96,7 @@
 
   <section role="tabpanel" data-panel="desc" class="py-6 text-sm leading-8 text-slate-600">
     <h2 class="section-title">معرفی {{ p.title }}</h2>
-    <div class="mt-3">{{ p.description|linebreaks }}</div>
+    <div class="prose-content mt-3">{{ p.description|rich }}</div>
     {% if p.usage_guide %}
     <h3 class="mt-6 font-bold text-slate-800">راهنمای استفاده</h3>
     <ol class="mt-2 list-inside space-y-1 [list-style-type:persian]">
@@ -120,7 +120,7 @@
       {% for f in p.faqs.all %}
       <details class="group p-4" {% if forloop.first %}open{% endif %}>
         <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold">{{ f.question }}<span class="transition group-open:rotate-180">{% include "partials/icon.html" with name="chevron-down" cls="size-4" %}</span></summary>
-        <p class="mt-3 text-sm leading-7 text-slate-600">{{ f.answer|linebreaksbr }}</p>
+        <div class="prose-content mt-3 text-sm leading-7 text-slate-600">{{ f.answer|rich }}</div>
       </details>
       {% endfor %}
     </div>
@@ -150,7 +150,7 @@
     <button type="button" class="btn-primary flex-1 py-3" data-add-to-cart>افزودن به سبد</button>
     <div class="text-end">
       <div class="flex items-center justify-end gap-1.5">
-        <span class="text-xs text-slate-400 line-through" data-compare></span>
+        <span class="text-xs text-slate-500 line-through" data-compare></span>
         <span class="rounded-full bg-sale px-1.5 text-[11px] leading-5 font-bold text-white" data-off-badge hidden></span>
       </div>
       <p class="text-lg font-black"><span data-price>{{ selected.price|price }}</span> <span class="text-[11px] font-normal text-slate-500">تومان</span></p>

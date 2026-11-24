@@ -130,6 +130,13 @@
       const data = await res.json();
       if (!data.ok) return showToast(data.error || "افزودن به سبد ممکن نشد.");
       $$("[data-cart-count]").forEach((el) => { el.textContent = faDigits(data.count); el.hidden = !data.count; });
+      if (window.gtag) {
+        const toman = parseInt(selected.dataset.vPrice.replace(/[^\d۰-۹]/g, "").replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)), 10) || 0;
+        window.gtag("event", "add_to_cart", {
+          currency: "IRR", value: toman * 10,
+          items: [{ item_id: `V${selected.dataset.vId}`, item_name: ($("main h1")?.textContent || "").trim(), item_variant: selected.dataset.vName, price: toman * 10, quantity: 1 }],
+        });
+      }
       openDrawer("cart");
     } catch {
       showToast("اتصال برقرار نشد؛ دوباره تلاش کنید.");

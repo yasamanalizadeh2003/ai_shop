@@ -4,6 +4,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
+from django_prose_editor.fields import ProseEditorField
+
+from apps.core.richtext import EXTENSIONS
 
 TOMAN = {"max_digits": 15, "decimal_places": 0}
 USD = {"max_digits": 18, "decimal_places": 6}
@@ -57,7 +60,7 @@ class Category(SeoFields):
     name = models.CharField("نام", max_length=80)
     slug = models.SlugField("نامک", max_length=120, unique=True, allow_unicode=True)
     icon = models.CharField("آیکون", max_length=20, choices=ICONS, default="box")
-    description = models.TextField("متن سئوی دسته", blank=True)
+    description = ProseEditorField("متن سئوی دسته", blank=True, extensions=EXTENSIONS, sanitize=True)
     sort_order = models.PositiveIntegerField("ترتیب", default=0)
     is_active = models.BooleanField("فعال", default=True)
 
@@ -100,11 +103,16 @@ class Product(SeoFields):
         blank=True,
         help_text="نام‌های هم‌معنی، هر کدام در یک خط؛ مثلاً: جمینای، gemini، هوش مصنوعی گوگل",
     )
-    image = models.ImageField("تصویر", upload_to="products/", blank=True)
+    image = models.ImageField(
+        "تصویر", upload_to="products/", blank=True,
+        help_text="خودکار به WebP مربعی ۸۰۰×۸۰۰ تبدیل می‌شود.", width_field="image_width", height_field="image_height",
+    )
+    image_width = models.PositiveIntegerField(null=True, blank=True, editable=False)
+    image_height = models.PositiveIntegerField(null=True, blank=True, editable=False)
     monogram = models.CharField("حروف جایگزین تصویر", max_length=4, blank=True, help_text="وقتی تصویر ندارد؛ مثلاً GPT")
     tint = models.CharField("رنگ جایگزین تصویر", max_length=60, choices=TINTS, default=TINTS[-1][0])
     short_features = models.TextField("ویژگی‌های کوتاه", blank=True, help_text="هر ویژگی در یک خط")
-    description = models.TextField("توضیحات", blank=True)
+    description = ProseEditorField("توضیحات", blank=True, extensions=EXTENSIONS, sanitize=True)
     usage_guide = models.TextField("راهنمای استفاده", blank=True)
     warranty_text = models.TextField("متن گارانتی", blank=True)
     related = models.ManyToManyField("self", blank=True, verbose_name="محصولات مشابه")
@@ -157,7 +165,7 @@ class ProductSpec(models.Model):
 class ProductFaq(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="faqs")
     question = models.CharField("پرسش", max_length=255)
-    answer = models.TextField("پاسخ")
+    answer = ProseEditorField("پاسخ", extensions=EXTENSIONS, sanitize=True)
     sort_order = models.PositiveIntegerField("ترتیب", default=0)
 
     class Meta:

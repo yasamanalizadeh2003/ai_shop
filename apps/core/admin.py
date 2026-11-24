@@ -6,6 +6,11 @@ from .models import AuditLog, ExchangeRate, SiteSettings
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     list_display = ("__str__", "active_gateway", "reservation_minutes", "updated_at")
+    fieldsets = (
+        ("فروش", {"fields": ("active_gateway", "reservation_minutes")}),
+        ("صفحه اصلی و سئو", {"fields": ("home_seo_title", "home_seo_description", "home_text_title", "home_text")}),
+        ("ابزارهای آمار", {"fields": ("search_console_verification", "analytics_id")}),
+    )
 
     def has_add_permission(self, request):
         return not SiteSettings.objects.exists()

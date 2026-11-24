@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}صفحه پیدا نشد | {{ SITE_NAME }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="container-page flex flex-col items-center py-20 text-center">
+  <p class="text-6xl font-black text-brand-200">۴۰۴</p>
+  <h1 class="mt-4 text-lg font-extrabold">صفحه‌ای که دنبالش بودید پیدا نشد</h1>
+  <p class="mt-2 text-sm text-slate-500">ممکن است آدرس اشتباه باشد یا این محصول دیگر فروخته نشود.</p>
+  <form action="{% url 'storefront:search' %}" method="get" class="mt-6 flex w-full max-w-sm gap-2">
+    <input name="q" class="input" placeholder="جست‌وجوی اشتراک…" aria-label="جست‌وجو">
+    <button type="submit" class="btn-primary shrink-0">جست‌وجو</button>
+  </form>
+  <a href="{% url 'storefront:home' %}" class="mt-4 text-sm font-bold text-brand-600">بازگشت به صفحه اصلی</a>
+</div>
+{% endblock %}

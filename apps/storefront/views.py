@@ -3,7 +3,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
@@ -15,8 +15,12 @@ from apps.accounts.views import LOGIN_NEXT_KEY, PENDING_MOBILE_KEY, RESEND_AT_KE
 from apps.catalog import selectors
 from apps.catalog.models import Category
 from apps.core.templatetags.persian import price as fa_price
+from apps.core.models import SiteSettings
 from apps.orders import cart as cart_ops
 from apps.orders import discounts
+
+from . import seo
+from .models import HomeBanner
 
 CHECKOUT_STEPS = [("cart", "سبد خرید"), ("info", "اطلاعات و ورود"), ("pay", "پرداخت")]
 FILTER_KEYS = ("in_stock", "instant", "duration", "min_price", "max_price")
@@ -31,16 +35,35 @@ def _context(request, nav_active=None, **extra):
 
 
 def home(request):
+    site = SiteSettings.get()
     return render(
         request,
         "storefront/home.html",
         _context(
             request,
             "home",
+            banners=HomeBanner.objects.filter(is_active=True),
             best_sellers=selectors.featured_cards(),
             discounted=selectors.discounted_cards(),
+            site=site,
+            seo_title=site.home_seo_title or f"{settings.SITE_NAME} | خرید اشتراک ChatGPT، Gemini و سرویس‌های هوش مصنوعی",
+            seo_description=site.home_seo_description
+            or "خرید امن اشتراک و اکانت سرویس‌های هوش مصنوعی با تحویل فوری، گارانتی تعویض و پشتیبانی.",
+            canonical_url=request.build_absolute_uri("/"),
+            jsonld=seo.as_script(seo.organization(request), seo.website(request)),
         ),
     )
+
+
+@require_GET
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        *[f"Disallow: {p}" for p in ("/admin/", "/cart/", "/checkout/", "/account/", "/orders/", "/payments/", "/search/", "/accounts/", "/renew/")],
+        "",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
+    ]
+    return HttpResponse("\n".join(lines) + "\n", content_type="text/plain; charset=utf-8")
 
 
 def category(request, slug):
@@ -54,6 +77,8 @@ def category(request, slug):
         query = urlencode([*((k, v) for k, vals in filter_items for v in vals), ("sort", key)])
         sort_links.append((key, label, f"{base}?{query}"))
 
+    crumbs = [("خانه", reverse("storefront:home")), (cat.name, None)]
+    canonical = request.build_absolute_uri(base)
     active_count = sum(
         [filters["in_stock"], filters["instant"], bool(filters["durations"]),
          filters["min_price"] is not None or filters["max_price"] is not None]
@@ -73,10 +98,11 @@ def category(request, slug):
             sort_links=sort_links,
             sorts=selectors.SORTS,
             duration_buckets=selectors.DURATION_BUCKETS,
-            crumbs=[("خانه", reverse("storefront:home")), (cat.name, None)],
+            crumbs=crumbs,
             seo_title=cat.seo_title or f"خرید اشتراک {cat.name} | {settings.SITE_NAME}",
             seo_description=cat.seo_description or f"خرید اشتراک {cat.name} با تحویل فوری و گارانتی از {settings.SITE_NAME}.",
-            canonical_url=request.build_absolute_uri(base),
+            canonical_url=canonical,
+            jsonld=seo.as_script(seo.breadcrumbs(request, crumbs, canonical)),
         ),
     )
 
@@ -90,6 +116,9 @@ def product(request, slug):
     seo_description = card.product.seo_description or (
         f"خرید {card.title} از {fa_price(card.price)} تومان، {selected.delivery_label} و {selected.warranty_label}."
     )
+    crumbs = [("خانه", reverse("storefront:home")), (cat.name, cat.get_absolute_url()), (card.title, None)]
+    canonical = request.build_absolute_uri(card.product.get_absolute_url())
+    image_url = seo.product_image_url(request, card.product)
     return render(
         request,
         "storefront/product.html",
@@ -98,14 +127,17 @@ def product(request, slug):
             product=card,
             selected=selected,
             related=selectors.related_cards(card),
-            crumbs=[
-                ("خانه", reverse("storefront:home")),
-                (cat.name, cat.get_absolute_url()),
-                (card.title, None),
-            ],
+            crumbs=crumbs,
             seo_title=card.product.seo_title or f"خرید {card.title} | {settings.SITE_NAME}",
             seo_description=seo_description,
-            canonical_url=request.build_absolute_uri(card.product.get_absolute_url()),
+            canonical_url=canonical,
+            og_image=image_url,
+            og_type="product",
+            jsonld=seo.as_script(
+                seo.product(request, card, image_url),
+                seo.breadcrumbs(request, crumbs, canonical),
+                seo.faq(card.product.faqs.all()),
+            ),
         ),
     )
 

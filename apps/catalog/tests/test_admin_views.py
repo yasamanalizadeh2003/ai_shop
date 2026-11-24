@@ -118,6 +118,28 @@ def test_product_page_warns_about_empty_stock(client, admin_user):
 
 
 @pytest.mark.django_db
+def test_rich_text_editor_loads_and_sanitizes_on_save(client, admin_user):
+    _otp_login(client, admin_user)
+    variant = make_variant()
+    product = variant.product
+    url = reverse("admin:catalog_product_change", args=[product.pk])
+    html = client.get(url).content.decode()
+    assert "django_prose_editor" in html  # editor assets are on the page
+
+    from apps.catalog.models import Category
+
+    cat = Category.objects.first()
+    cat_url = reverse("admin:catalog_category_change", args=[cat.pk])
+    response = client.post(cat_url, {
+        "name": cat.name, "slug": cat.slug, "icon": cat.icon, "sort_order": 0, "is_active": "on",
+        "description": '<h2>تیتر</h2><p>متن<script>alert(1)</script></p>', "seo_title": "", "seo_description": "",
+    })
+    assert response.status_code == 302, response.content.decode()[:500]
+    cat.refresh_from_db()
+    assert "<h2>تیتر</h2>" in cat.description and "script" not in cat.description
+
+
+@pytest.mark.django_db
 def test_manual_variant_has_no_stock_warning(client, admin_user):
     _otp_login(client, admin_user)
     variant = make_variant(delivery_type="manual", delivery_deadline_hours=3)

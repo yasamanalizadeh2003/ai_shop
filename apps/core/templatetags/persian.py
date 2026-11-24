@@ -34,6 +34,23 @@ def price(value):
 
 
 @register.filter
+def rich(value):
+    """Render admin-edited rich text safely."""
+    from django.utils.safestring import mark_safe
+
+    from apps.core.richtext import render
+
+    return mark_safe(render(value))
+
+
+@register.filter
+def plain(value):
+    from apps.core.richtext import to_plain
+
+    return to_plain(value)
+
+
+@register.filter
 def jdate(value, fmt="date"):
     """
     Shamsi date in Tehran time with Persian digits.

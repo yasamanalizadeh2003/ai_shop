@@ -15,6 +15,17 @@ def set_variant_price(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=Product)
+def convert_product_image(sender, instance, **kwargs):
+    from .images import to_square_webp
+
+    image = instance.image
+    # Only freshly uploaded files (not already stored ones) are converted.
+    if image and not getattr(image, "_committed", True) and not image.name.lower().endswith(".webp"):
+        converted = to_square_webp(image.file)
+        instance.image.save(converted.name, converted, save=False)
+
+
+@receiver(pre_save, sender=Product)
 def set_search_text(sender, instance, **kwargs):
     from .selectors import normalize_query
 

@@ -1,6 +1,6 @@
 {# Product image, or a coloured monogram tile when no image is uploaded. Expects `p` and optional `text_cls`. #}
 {% if p.image %}
-  <img src="{{ p.image.url }}" alt="{{ p.title }}" width="600" height="600" loading="{{ loading|default:'lazy' }}" decoding="async" class="absolute inset-0 size-full object-cover">
+  <img src="{{ p.image.url }}" alt="{{ p.title }}" width="800" height="800" loading="{{ loading|default:'lazy' }}"{% if loading == "eager" %} fetchpriority="high"{% endif %} decoding="async" class="absolute inset-0 size-full object-cover">
 {% else %}
   <span class="absolute inset-0 bg-gradient-to-br {{ p.tint }}"></span>
   <span class="absolute inset-0 grid place-items-center font-black text-white/95 drop-shadow {{ text_cls|default:'text-3xl' }}" aria-hidden="true">{{ p.mono }}</span>

@@ -25,6 +25,7 @@ def callback(request, gateway):
             messages.warning(request, "پرداخت انجام شد اما موجودی سفارش تمام شده بود. مبلغ به کارت شما برمی‌گردد و با پیامک خبر می‌دهیم.")
         else:
             messages.success(request, f"پرداخت موفق بود. شماره پیگیری: {payment.ref_id}")
+            request.session["track_purchase"] = order.pk
     else:
         messages.error(request, "پرداخت ناموفق بود یا لغو شد. اگر مبلغی کسر شده باشد، حداکثر تا ۷۲ ساعت به حساب شما برمی‌گردد.")
     return redirect(order.get_absolute_url())

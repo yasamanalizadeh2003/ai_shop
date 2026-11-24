@@ -3,17 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}خرید اشتراک و اکانت سرویس‌های هوش مصنوعی با تحویل فوری و گارانتی{% endblock %}">
+  <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ SITE_NAME }}{% endif %}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}خرید اشتراک و اکانت سرویس‌های هوش مصنوعی با تحویل فوری و گارانتی{% endif %}{% endblock %}">
   {% block robots %}{% endblock %}
-  {% block canonical %}{% endblock %}
+  {% block canonical %}{% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}{% endblock %}
+
+  {# Open Graph / social previews #}
+  <meta property="og:site_name" content="{{ SITE_NAME }}">
+  <meta property="og:locale" content="fa_IR">
+  <meta property="og:type" content="{{ og_type|default:'website' }}">
+  <meta property="og:title" content="{% if seo_title %}{{ seo_title }}{% else %}{{ SITE_NAME }}{% endif %}">
+  <meta property="og:description" content="{% if seo_description %}{{ seo_description }}{% else %}خرید اشتراک و اکانت سرویس‌های هوش مصنوعی با تحویل فوری و گارانتی{% endif %}">
+  {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
+  <meta property="og:image" content="{% if og_image %}{{ og_image }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-default.png' %}{% endif %}">
+  <meta name="twitter:card" content="summary_large_image">
+
   <meta name="theme-color" content="#1b3164">
   <meta name="csrf-token" content="{{ csrf_token }}">
+  {% if site_settings.search_console_verification %}<meta name="google-site-verification" content="{{ site_settings.search_console_verification }}">{% endif %}
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
   <link rel="preload" href="{% static 'fonts/Vazirmatn-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {{ jsonld|default:"" }}
+  {% if site_settings.analytics_id %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ site_settings.analytics_id }}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ site_settings.analytics_id|escapejs }}');</script>
+  {% endif %}
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}pb-16 lg:pb-0{% endblock %}">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:shadow">رفتن به محتوای اصلی</a>
   {% block header %}{% include "partials/header.html" %}{% endblock %}
 
   <main id="main">

@@ -91,3 +91,14 @@
   </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+{% if track_purchase and site_settings.analytics_id %}
+<script>
+  window.gtag && gtag("event", "purchase", {
+    transaction_id: "{{ order.number }}", currency: "IRR", value: {{ order.total }}0,
+    items: [{% for row in items %}{ item_name: "{{ row.item.product_title|escapejs }}", item_variant: "{{ row.item.variant_name|escapejs }}", price: {{ row.item.unit_price }}0, quantity: 1 }{% if not forloop.last %},{% endif %}{% endfor %}]
+  });
+</script>
+{% endif %}
+{% endblock %}

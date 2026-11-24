@@ -57,7 +57,7 @@
             </form>
           </div>
           <div class="text-end">
-            {% if line.line_before != line.line_total %}<p class="text-xs text-slate-400 line-through">{{ line.line_before|price }}</p>{% endif %}
+            {% if line.line_before != line.line_total %}<p class="text-xs text-slate-500 line-through">{{ line.line_before|price }}</p>{% endif %}
             <p class="font-extrabold">{{ line.line_total|price }} <span class="text-[11px] font-normal text-slate-500">تومان</span></p>
           </div>
         </div>

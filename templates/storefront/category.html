@@ -83,7 +83,7 @@
 
     {% if not products %}
       <div class="flex flex-col items-center py-16 text-center">
-        <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-400">{% include "partials/icon.html" with name="search" cls="size-9" %}</span>
+        <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-500">{% include "partials/icon.html" with name="search" cls="size-9" %}</span>
         {% if has_filters %}
           <p class="mt-4 font-bold">کالایی با این فیلترها پیدا نشد</p>
           <p class="mt-1 text-sm text-slate-500">چند فیلتر را بردارید.</p>
@@ -93,6 +93,7 @@
         {% endif %}
       </div>
     {% else %}
+      <h2 class="sr-only">فهرست کالاها</h2>
       <ul class="mt-3 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 [&>li]:border-b [&>li]:border-e [&>li]:border-slate-100">
         {% for p in products %}
         <li>{% include "partials/product_card.html" %}</li>
@@ -103,7 +104,7 @@
     {% if category.description %}
     <section class="card mt-8 p-5">
       <h2 class="section-title">درباره اشتراک‌های {{ category.name }}</h2>
-      <div class="mt-3 text-sm leading-8 text-slate-600">{{ category.description|linebreaks }}</div>
+      <div class="prose-content mt-3 text-sm leading-8 text-slate-600">{{ category.description|rich }}</div>
     </section>
     {% endif %}
   </div>

@@ -3,6 +3,9 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django_prose_editor.fields import ProseEditorField
+
+from .richtext import EXTENSIONS
 
 
 class ExchangeRate(models.Model):
@@ -38,6 +41,16 @@ class SiteSettings(models.Model):
     reservation_minutes = models.PositiveSmallIntegerField(
         "مهلت رزرو سفارش (دقیقه)", default=15, validators=[MinValueValidator(5)]
     )
+    # SEO / analytics
+    home_seo_title = models.CharField("عنوان سئوی صفحه اصلی", max_length=70, blank=True)
+    home_seo_description = models.CharField("توضیح متای صفحه اصلی", max_length=170, blank=True)
+    home_text_title = models.CharField("تیتر متن صفحه اصلی", max_length=120, blank=True,
+                                       default="خرید اشتراک هوش مصنوعی با تحویل فوری")
+    home_text = ProseEditorField("متن سئوی صفحه اصلی", blank=True, extensions=EXTENSIONS, sanitize=True)
+    search_console_verification = models.CharField(
+        "کد تأیید Search Console", max_length=100, blank=True, help_text="فقط مقدار content تگ متای google-site-verification"
+    )
+    analytics_id = models.CharField("شناسه Google Analytics (GA4)", max_length=30, blank=True, help_text="مثلاً G-XXXXXXX")
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_otp",
     "django_otp.plugins.otp_totp",
+    "django_prose_editor",
     # local
     "apps.core",
     "apps.accounts",
