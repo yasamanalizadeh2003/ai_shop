@@ -72,10 +72,18 @@
         {% else %}
           <form method="post" action="{% url 'orders:renew' d.pk %}">{% csrf_token %}<button type="submit" class="btn-primary py-2 text-xs">{% include "partials/icon.html" with name="refresh" cls="size-4" %} تمدید</button></form>
         {% endif %}
-        {% if row.in_warranty %}
-          <span class="btn-ghost cursor-not-allowed border border-slate-200 py-2 text-xs opacity-60" title="ثبت گزارش مشکل همراه با بخش تیکت فعال می‌شود">{% include "partials/icon.html" with name="alert" cls="size-4" %} گزارش مشکل</span>
-        {% endif %}
       </div>
+      {% if row.in_warranty %}
+      <details class="mt-3 rounded-lg border border-slate-200">
+        <summary class="flex cursor-pointer list-none items-center gap-1.5 p-2.5 text-xs font-bold text-slate-600">{% include "partials/icon.html" with name="alert" cls="size-4" %} گزارش مشکل (گارانتی تا {{ d.warranty_ends_at|jdate:"long" }})</summary>
+        <form method="post" action="{% url 'support:report_problem' item.pk %}" class="border-t border-slate-100 p-3">
+          {% csrf_token %}
+          <label for="problem-{{ item.pk }}" class="block text-xs font-bold">مشکل را شرح دهید</label>
+          <textarea id="problem-{{ item.pk }}" name="body" rows="3" required class="input mt-2" placeholder="مثلاً: اکانت از دیروز وارد نمی‌شود و خطای … می‌دهد."></textarea>
+          <button type="submit" class="btn-primary mt-2 text-xs">ثبت گزارش</button>
+        </form>
+      </details>
+      {% endif %}
       {% endif %}{% endwith %}
     </li>
     {% endwith %}

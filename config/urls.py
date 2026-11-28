@@ -24,6 +24,7 @@ urlpatterns = [
     path("sitemap.xml", cache_page(60 * 60)(sitemap), {"sitemaps": SITEMAPS}, name="sitemap"),
     path("accounts/", include("apps.accounts.urls")),
     path("payments/", include("apps.payments.urls")),
+    path("", include("apps.support.urls")),
     path("", include("apps.orders.urls")),
     path("", include("apps.storefront.urls")),
 ]

@@ -230,8 +230,11 @@ def apply_payment(order_id, *, amount, payment_ref=""):
 
     context = {"order_number": order.number, "amount": f"{order.total:,}", "order_url": absolute(order.get_absolute_url())}
     if refund_needed:
+        from apps.support.models import Refund
+        from apps.support.services import create_refund
+
         team.alert("refund_required", f"پرداخت {order} بعد از انقضای رزرو رسید و موجودی نبود؛ بازگشت وجه لازم است.")
-        notify(order.customer, "refund_required", context, key=f"refund_required:{order.pk}", email=order.notification_email)
+        create_refund(order, amount=order.total, reason=Refund.Reason.LATE_PAYMENT, key=f"order:{order.pk}")
     else:
         notify(order.customer, "payment_success", context, key=f"paid:{order.pk}", email=order.notification_email)
         from .delivery import notify_item_delivered

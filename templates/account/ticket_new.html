@@ -1,0 +1,27 @@
+{% extends "account/base.html" %}
+
+{% block title %}تیکت جدید | {{ SITE_NAME }}{% endblock %}
+
+{% block account_content %}
+<h1 class="text-lg font-extrabold">تیکت جدید</h1>
+<form method="post" class="card mt-4 space-y-4 p-4">
+  {% csrf_token %}
+  <div>
+    <label for="subject" class="block text-sm font-bold">موضوع</label>
+    <input id="subject" name="subject" value="{{ form.subject }}" maxlength="150" required class="input mt-2">
+  </div>
+  <div>
+    <label for="order" class="block text-sm font-bold">سفارش مرتبط <span class="font-normal text-slate-500">(اختیاری)</span></label>
+    <select id="order" name="order" class="input mt-2">
+      <option value="">—</option>
+      {% for o in orders %}<option value="{{ o.number }}" {% if form.order == o.number|stringformat:"s" %}selected{% endif %}>سفارش {{ o.number|fa }} · {{ o.created_at|jdate }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="body" class="block text-sm font-bold">متن پیام</label>
+    <textarea id="body" name="body" rows="6" required class="input mt-2">{{ form.body }}</textarea>
+    <p class="mt-1.5 text-xs text-slate-500">رمز عبور یا شماره کارت را اینجا ننویسید.</p>
+  </div>
+  <button type="submit" class="btn-primary">ارسال تیکت</button>
+</form>
+{% endblock %}

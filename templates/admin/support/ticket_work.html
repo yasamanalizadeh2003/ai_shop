@@ -1,0 +1,98 @@
+{% extends "admin/base_site.html" %}
+{% load persian %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">خانه</a> ›
+  <a href="{% url 'admin:support_ticket_changelist' %}">تیکت‌ها</a> › #{{ ticket.pk }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <fieldset class="module aligned">
+    <h2>مشخصات</h2>
+    <div class="form-row"><label>مشتری:</label> <span dir="ltr">{{ ticket.customer }}</span></div>
+    <div class="form-row"><label>نوع / وضعیت:</label> {{ ticket.get_kind_display }} · <b>{{ ticket.get_status_display }}</b></div>
+    {% if ticket.order %}<div class="form-row"><label>سفارش:</label> <a href="{% url 'admin:orders_order_change' ticket.order_id %}">{{ ticket.order.number }}</a></div>{% endif %}
+  </fieldset>
+
+  {% if claim %}
+  <fieldset class="module aligned">
+    <h2>درخواست گارانتی — {{ claim.get_status_display }}</h2>
+    <div class="form-row"><label>قلم:</label> {{ claim.order_item.product_title }} — {{ claim.order_item.variant_name }}{% if claim.order_item.account_identifier %} · <span dir="ltr">{{ claim.order_item.account_identifier }}</span>{% endif %}</div>
+    {% with d=claim.order_item.delivery %}{% if d %}
+    <div class="form-row"><label>تحویل:</label> {{ d.delivered_at|jdate:"long" }} · پایان اشتراک {{ d.subscription_ends_at|jdate:"long" }} · پایان گارانتی {{ d.warranty_ends_at|jdate:"long" }}</div>
+    {% endif %}{% endwith %}
+    {% if claim.resolution_note %}<div class="form-row"><label>توضیح:</label> {{ claim.resolution_note }}</div>{% endif %}
+  </fieldset>
+
+  {% if claim.status == "pending" or claim.status == "refund_requested" %}
+    {% if can_resolve and claim.status == "pending" %}
+    <form method="post" style="margin-bottom:1rem">{% csrf_token %}
+      <input type="hidden" name="action" value="replace">
+      <fieldset class="module aligned"><h2>تعویض (اپراتور)</h2>
+        {% if claim.order_item.delivery_type == "manual" %}
+        <div class="form-row"><label>اطلاعات تحویل جدید:</label><textarea name="note" rows="3" style="width:60%"></textarea></div>
+        {% else %}
+        <div class="form-row">یک آیتم تازه از انبار همین تنوع تحویل و آیتم قبلی باطل می‌شود. گارانتی از نو شروع نمی‌شود.</div>
+        {% endif %}
+      </fieldset>
+      <div class="submit-row"><input type="submit" class="default" value="تعویض و اطلاع به مشتری"></div>
+    </form>
+    <form method="post" style="margin-bottom:1rem">{% csrf_token %}
+      <input type="hidden" name="action" value="refer">
+      <fieldset class="module aligned"><h2>ارجاع به مدیر مالی (بازگشت وجه)</h2>
+        <div class="form-row"><label>یادداشت:</label><input name="note" style="width:60%"></div>
+      </fieldset>
+      <div class="submit-row"><input type="submit" value="ارجاع به مدیر مالی"></div>
+    </form>
+    {% endif %}
+    {% if can_approve %}
+    <form method="post" style="margin-bottom:1rem">{% csrf_token %}
+      <input type="hidden" name="action" value="approve_refund">
+      <fieldset class="module aligned"><h2>بازگشت وجه (مدیر مالی)</h2>
+        <div class="form-row">پیشنهاد به نسبت روزهای باقی‌مانده: <b>{{ suggested_refund|price }} تومان</b> (حداکثر {{ max_refund|price }})</div>
+        <div class="form-row"><label>مبلغ (تومان):</label><input name="amount" inputmode="numeric" placeholder="{{ suggested_refund }}"></div>
+      </fieldset>
+      <div class="submit-row"><input type="submit" class="default" value="تأیید بازگشت وجه"></div>
+    </form>
+    {% endif %}
+    {% if can_resolve %}
+    <form method="post" style="margin-bottom:1rem">{% csrf_token %}
+      <input type="hidden" name="action" value="reject">
+      <fieldset class="module aligned"><h2>رد درخواست</h2>
+        <div class="form-row"><label>دلیل (برای مشتری):</label><input name="reason" style="width:60%" required></div>
+      </fieldset>
+      <div class="submit-row"><input type="submit" value="رد کردن" style="background:#ba2121"></div>
+    </form>
+    {% endif %}
+  {% endif %}
+  {% endif %}
+
+  {% for refund in refunds %}
+  <p class="help">بازگشت وجه: {{ refund.amount|price }} تومان — {{ refund.get_status_display }}{% if refund.status != "paid" %} · <a href="{% url 'admin:support_refund_pay' refund.pk %}">ثبت واریز</a>{% endif %}</p>
+  {% endfor %}
+
+  <fieldset class="module">
+    <h2>گفت‌وگو</h2>
+    {% for m in ticket_messages %}
+    <div style="padding:.75rem 1rem;border-bottom:1px solid #eee;{% if m.author_type == 'staff' %}background:#f2f5fa{% elif m.author_type == 'system' %}background:#fff8e6{% endif %}">
+      <div style="font-size:11px;color:#666">{{ m.get_author_type_display }}{% if m.staff %} ({{ m.staff }}){% endif %} · {{ m.created_at|jdate:"datetime" }}</div>
+      <div style="white-space:pre-line;margin-top:.25rem">{{ m.body }}</div>
+    </div>
+    {% endfor %}
+  </fieldset>
+
+  {% if ticket.status != "closed" %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="reply">
+    <fieldset class="module aligned"><h2>پاسخ</h2>
+      <div class="form-row"><textarea name="body" rows="5" style="width:100%" required></textarea></div>
+      <div class="form-row"><label><input type="checkbox" name="close_after" value="1"> بستن تیکت بعد از پاسخ</label></div>
+    </fieldset>
+    <div class="submit-row"><input type="submit" class="default" value="ارسال پاسخ"></div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

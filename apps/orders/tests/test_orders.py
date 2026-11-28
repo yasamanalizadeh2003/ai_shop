@@ -165,8 +165,11 @@ def test_apply_payment_rejects_wrong_amount(stock_variant):
 
 
 @pytest.mark.django_db
-def test_payment_after_expiry_without_stock_goes_to_refund_queue(stock_variant, sms_outbox):
+def test_payment_after_expiry_without_stock_goes_to_refund_queue(stock_variant, django_capture_on_commit_callbacks):
     """Spec test: money after the reservation expired and no stock -> refund queue + SMS."""
+    from apps.notifications.models import Message
+    from apps.support.models import Refund
+
     customer = make_customer()
     late = services.create_order(customer, make_cart(customer, (stock_variant, 1)))
     services.expire_order(late.pk)
@@ -174,13 +177,17 @@ def test_payment_after_expiry_without_stock_goes_to_refund_queue(stock_variant, 
     other = make_customer()
     services.create_order(other, make_cart(other, (stock_variant, 10)))
 
-    services.apply_payment(late.pk, amount=late.total)
+    with django_capture_on_commit_callbacks(execute=True):
+        services.apply_payment(late.pk, amount=late.total)
     late.refresh_from_db()
     assert late.needs_refund is True
     assert late.paid_at is not None
     assert not late.items.filter(inventory_item__isnull=False).exists()
     assert any(m["kind"] == "refund_required" for m in MemoryTeamBackend.outbox)
-    from apps.notifications.models import Message
+
+    refund = Refund.objects.get(order=late)  # in the finance manager's queue
+    assert refund.amount == late.total and refund.reason == Refund.Reason.LATE_PAYMENT
+    assert refund.status == Refund.Status.AWAITING_CARD
     assert Message.objects.filter(customer=customer, event="refund_required", channel="sms").exists()
 
 

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.orders",
     "apps.payments",
+    "apps.support",
     "apps.storefront",
 ]
 

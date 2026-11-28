@@ -23,6 +23,7 @@
         <div class="absolute end-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-lg">
           <a href="{% url 'orders:account_orders' %}" class="block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50">سفارش‌ها</a>
           <a href="{% url 'orders:account_subscriptions' %}" class="block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50">اشتراک‌های فعال</a>
+          <a href="{% url 'support:tickets' %}" class="block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50">تیکت‌ها</a>
           <a href="{% url 'orders:account_settings' %}" class="block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50">تنظیمات پیامک</a>
           <form method="post" action="{% url 'accounts:logout' %}" class="border-t border-slate-100">{% csrf_token %}
             <button type="submit" class="w-full rounded-lg px-3 py-2 text-start text-slate-600 hover:bg-slate-50 hover:text-sale">خروج از حساب</button>

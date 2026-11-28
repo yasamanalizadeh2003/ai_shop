@@ -1,0 +1,32 @@
+{% extends "account/base.html" %}
+
+{% block title %}تیکت‌ها | {{ SITE_NAME }}{% endblock %}
+
+{% block account_content %}
+<div class="flex items-center justify-between gap-3">
+  <h1 class="text-lg font-extrabold">تیکت‌های پشتیبانی</h1>
+  <a href="{% url 'support:ticket_new' %}" class="btn-primary text-xs">تیکت جدید</a>
+</div>
+{% if tickets %}
+<ul class="mt-4 space-y-3">
+  {% for t in tickets %}
+  <li>
+    <a href="{{ t.get_absolute_url }}" class="card flex flex-wrap items-center justify-between gap-3 p-4 hover:border-brand-200">
+      <div class="min-w-0">
+        <p class="truncate text-sm font-bold">{{ t.subject }}</p>
+        <p class="mt-1 text-xs text-slate-500">#{{ t.pk|fa }} · {{ t.get_kind_display }} · {{ t.updated_at|jdate:"datetime" }}</p>
+      </div>
+      <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold
+        {% if t.status == 'answered' %}bg-emerald-50 text-emerald-700{% elif t.status == 'open' %}bg-amber-50 text-amber-800{% else %}bg-slate-100 text-slate-600{% endif %}">{{ t.get_status_display }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="card mt-4 flex flex-col items-center px-4 py-12 text-center">
+  <span class="grid size-20 place-items-center rounded-full bg-slate-100 text-slate-500">{% include "partials/icon.html" with name="headset" cls="size-9" %}</span>
+  <p class="mt-4 font-bold">تیکتی ندارید</p>
+  <p class="mt-1 text-sm text-slate-500">برای مشکل یک اشتراک، از صفحه سفارش روی «گزارش مشکل» بزنید.</p>
+</div>
+{% endif %}
+{% endblock %}

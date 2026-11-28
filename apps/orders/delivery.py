@@ -139,6 +139,11 @@ def reject_manual(item_id, staff, *, reason):
         order.needs_refund = True
         order.save(update_fields=["needs_refund", "updated_at"])
         _refresh_order_status(order)
+
+        from apps.support.models import Refund
+        from apps.support.services import create_refund, paid_share
+
+        create_refund(order, item=item, amount=paid_share(item), reason=Refund.Reason.ITEM_REJECTED, key=f"item:{item.pk}")
         transaction.on_commit(lambda: team.alert("refund_required", f"{order}: قلم «{item}» رد شد ({reason}). بازگشت وجه لازم است."))
     return item
 

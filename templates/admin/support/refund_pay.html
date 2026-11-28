@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load persian %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">خانه</a> ›
+  <a href="{% url 'admin:support_refund_changelist' %}">صف بازگشت وجه</a> › #{{ refund.pk }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <fieldset class="module aligned">
+    <h2>مشخصات</h2>
+    <div class="form-row"><label>سفارش:</label> <a href="{% url 'admin:orders_order_change' refund.order_id %}">{{ refund.order.number }}</a> · مشتری <span dir="ltr">{{ refund.order.customer }}</span></div>
+    <div class="form-row"><label>دلیل:</label> {{ refund.get_reason_display }}{% if refund.order_item %} — {{ refund.order_item }}{% endif %}</div>
+    <div class="form-row"><label>مبلغ:</label> <b>{{ refund.amount|price }} تومان</b></div>
+    <div class="form-row"><label>وضعیت:</label> {{ refund.get_status_display }}</div>
+    <div class="form-row"><label>کارت:</label> <span dir="ltr">{{ refund.card_masked|default:"هنوز ثبت نشده" }}</span>
+      {% if refund.ticket %} · <a href="{% url 'admin:support_ticket_work' refund.ticket_id %}">تیکت #{{ refund.ticket_id }}</a>{% endif %}</div>
+  </fieldset>
+
+  {% if refund.status == "ready" and can_reveal %}
+    {% if card %}
+      <p class="errornote">این مشاهده در لاگ عملیات ثبت شد.</p>
+      <pre dir="ltr" style="font-size:20px;letter-spacing:3px;padding:1rem;background:#f6f6f6">{{ card }}</pre>
+    {% else %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reveal">
+        <input type="submit" value="نمایش شماره کامل کارت (ثبت در لاگ)"></form>
+    {% endif %}
+  {% endif %}
+
+  {% if refund.status != "paid" %}
+  <form method="post" style="margin-top:1.5rem">{% csrf_token %}
+    <input type="hidden" name="action" value="pay">
+    <fieldset class="module aligned"><h2>ثبت واریز</h2>
+      <div class="form-row"><label>روش:</label>
+        <select name="method">{% for value, label in methods %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+      <div class="form-row"><label>شماره پیگیری:</label><input name="tracking_number" required dir="ltr"></div>
+      <div class="help">پس از ثبت، شماره کارت پاک می‌شود و به مشتری پیامک ارسال می‌شود.</div>
+    </fieldset>
+    <div class="submit-row"><input type="submit" class="default" value="ثبت واریز"></div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "account/base.html" %}
+
+{% block title %}تیکت #{{ ticket.pk|fa }} | {{ SITE_NAME }}{% endblock %}
+
+{% block account_content %}
+<div class="card p-4">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="font-extrabold">{{ ticket.subject }}</h1>
+      <p class="mt-1 text-xs text-slate-500">#{{ ticket.pk|fa }} · {{ ticket.get_kind_display }}{% if ticket.order %} · <a class="text-brand-600" href="{{ ticket.order.get_absolute_url }}">سفارش {{ ticket.order.number|fa }}</a>{% endif %}</p>
+    </div>
+    <span class="rounded-full px-2.5 py-1 text-xs font-bold {% if ticket.status == 'answered' %}bg-emerald-50 text-emerald-700{% elif ticket.status == 'open' %}bg-amber-50 text-amber-800{% else %}bg-slate-100 text-slate-600{% endif %}">{{ ticket.get_status_display }}</span>
+  </div>
+  {% if claim %}
+  <p class="mt-3 rounded-lg bg-slate-50 p-3 text-xs leading-6 text-slate-600">
+    وضعیت گارانتی: <b class="text-slate-800">{{ claim.get_status_display }}</b>{% if claim.resolution_note and claim.status == "rejected" %} — {{ claim.resolution_note }}{% endif %}
+  </p>
+  {% endif %}
+</div>
+
+{% for refund in refunds %}
+<div class="card mt-3 p-4">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <p class="text-sm font-bold">بازگشت {{ refund.amount|price }} تومان</p>
+    <span class="text-xs font-bold {% if refund.status == 'paid' %}text-success{% else %}text-amber-700{% endif %}">{{ refund.get_status_display }}</span>
+  </div>
+  {% if refund.status == "awaiting_card" or refund.status == "ready" %}
+  <form method="post" class="mt-3 flex flex-wrap gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="refund" value="{{ refund.pk }}">
+    <label for="card-{{ refund.pk }}" class="sr-only">شماره کارت</label>
+    <input id="card-{{ refund.pk }}" name="card" class="input max-w-xs text-left tracking-widest" dir="ltr" inputmode="numeric" autocomplete="cc-number"
+           placeholder="{% if refund.card_masked %}{{ refund.card_masked }}{% else %}xxxx xxxx xxxx xxxx{% endif %}" maxlength="23" required>
+    <button type="submit" class="btn-primary">{% if refund.card_masked %}تغییر کارت{% else %}ثبت شماره کارت{% endif %}</button>
+    <p class="w-full text-xs text-slate-500">کارت باید به نام صاحب حساب باشد. شماره کارت رمزنگاری‌شده نگهداری و بعد از واریز پاک می‌شود.</p>
+  </form>
+  {% elif refund.status == "paid" %}
+  <p class="mt-2 text-xs text-slate-600">واریز شد · شماره پیگیری <b dir="ltr">{{ refund.tracking_number }}</b> · {{ refund.paid_at|jdate:"datetime" }}</p>
+  {% endif %}
+</div>
+{% endfor %}
+
+<ol class="mt-4 space-y-3">
+  {% for m in ticket_messages %}
+  <li class="flex {% if m.author_type == 'customer' %}justify-start{% else %}justify-end{% endif %}">
+    <div class="max-w-[85%] rounded-2xl p-3 text-sm leading-7
+      {% if m.author_type == 'customer' %}bg-white ring-1 ring-slate-200{% elif m.author_type == 'staff' %}bg-brand-50 text-brand-900{% else %}bg-amber-50 text-amber-900{% endif %}">
+      <p class="text-[11px] font-bold opacity-70">{% if m.author_type == 'customer' %}شما{% elif m.author_type == 'staff' %}پشتیبانی {{ SITE_NAME }}{% else %}پیام سیستم{% endif %} · {{ m.created_at|jdate:"datetime" }}</p>
+      <p class="mt-1 whitespace-pre-line">{{ m.body }}</p>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+
+{% if ticket.status != "closed" %}
+<form method="post" class="card mt-4 p-4">
+  {% csrf_token %}
+  <label for="reply" class="block text-sm font-bold">پاسخ شما</label>
+  <textarea id="reply" name="body" rows="4" class="input mt-2" required></textarea>
+  <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+    <button type="submit" class="btn-primary">ارسال</button>
+    <button type="submit" name="close" value="1" formnovalidate class="text-xs font-bold text-slate-500 hover:text-sale">بستن تیکت</button>
+  </div>
+</form>
+{% else %}
+<p class="mt-4 text-center text-xs text-slate-500">این تیکت بسته شده است. <a href="{% url 'support:ticket_new' %}" class="font-bold text-brand-600">تیکت جدید</a></p>
+{% endif %}
+{% endblock %}
